@@ -61,7 +61,11 @@ export default function ProductCard({ product }: Props) {
         </button>
         <Link href={`/products/${product.id}`}>
           <Image
-            src={product.image}
+            src={
+              product.image
+                ? product.image
+                : "https://www.shutterstock.com/search/color-image"
+            }
             alt={product.name}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
