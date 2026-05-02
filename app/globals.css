@@ -29,7 +29,12 @@
     line-height: 1.6;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-cormorant), Georgia, serif;
     font-weight: 500;
     line-height: 1.2;
@@ -49,16 +54,82 @@
     font-family: inherit;
     cursor: pointer;
   }
+
+  /* Focus states for accessibility */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 2px solid #8aa58a;
+    outline-offset: 2px;
+  }
 }
 
 @keyframes kenburns {
-  from { transform: scale(1.05); }
-  to   { transform: scale(1.15); }
+  from {
+    transform: scale(1.05);
+  }
+
+  to {
+    transform: scale(1.15);
+  }
 }
 
 @keyframes rise {
-  from { opacity: 0; transform: translateY(30px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .animate-rise {
@@ -67,4 +138,41 @@
 
 .animate-kenburns {
   animation: kenburns 18s ease-out infinite alternate;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-in {
+  animation: fadeInDown 0.4s ease-out;
+}
+
+.fade-in {
+  animation: fadeInDown 0.3s ease-out;
+}
+
+.slide-in-from-bottom-4 {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Smooth transitions */
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 rounded-lg bg-sage-dark text-white font-semibold text-sm hover:bg-ink hover:shadow-lg transition-all active:scale-95;
+  }
+
+  .input-field {
+    @apply border border-beige rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-sage-light focus:border-sage-dark focus:bg-cream/50 transition-all;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow border border-transparent hover:border-sage-light/20;
+  }
+
+  .section-header {
+    @apply inline-block text-[12px] tracking-[3px] uppercase text-sage-dark font-medium mb-3;
+  }
 }

@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
-import { db, generateId } from '@/lib/data';
-import type { Order } from '@/lib/types';
+import { NextResponse } from "next/server";
+import { db, generateId } from "@/lib/data";
+import type { Order } from "@/lib/types";
 
 export async function GET() {
   return NextResponse.json(db.orders);
@@ -10,24 +10,33 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    if (!body.customerName || !body.customerEmail || !Array.isArray(body.items)) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (
+      !body.customerName ||
+      !body.customerEmail ||
+      !body.customerPhone ||
+      !Array.isArray(body.items)
+    ) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 },
+      );
     }
 
     const order: Order = {
-      id: generateId('ord'),
+      id: generateId("ord"),
       customerName: body.customerName,
       customerEmail: body.customerEmail,
-      address: body.address ?? '',
+      customerPhone: body.customerPhone,
+      address: body.address ?? "",
       items: body.items,
       total: Number(body.total),
-      status: 'pending',
+      status: "pending",
       createdAt: new Date().toISOString(),
     };
 
     db.orders.push(order);
     return NextResponse.json(order, { status: 201 });
   } catch {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 }

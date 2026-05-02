@@ -24,11 +24,11 @@ export interface Product {
 }
 
 export type OrderStatus =
-  | 'pending'
-  | 'processing'
-  | 'shipped'
-  | 'delivered'
-  | 'cancelled';
+  | "pending"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "cancelled";
 
 export interface OrderItem {
   productId: string;
@@ -41,6 +41,7 @@ export interface Order {
   id: string;
   customerName: string;
   customerEmail: string;
+  customerPhone: string;
   address: string;
   items: OrderItem[];
   total: number;

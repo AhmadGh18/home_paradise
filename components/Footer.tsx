@@ -1,16 +1,16 @@
-import Link from 'next/link';
+import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-ink text-[#c5c9c4] pt-20 pb-8">
+    <footer className="bg-ink text-cream pt-24 pb-8 border-t-2 border-sage-dark/20">
       <div className="max-w-[1240px] mx-auto px-6">
         {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr_1fr] gap-10 mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_1fr_1fr] gap-12 mb-20">
           {/* Brand */}
-          <div className="sm:col-span-2 lg:col-span-1">
+          <div>
             <Link
               href="/"
-              className="font-serif text-[26px] font-semibold text-cream flex items-center gap-2 mb-4"
+              className="font-serif text-[24px] font-semibold text-cream flex items-center gap-2.5 mb-5 hover:opacity-80 transition-opacity"
               aria-label="HomeParadise home"
             >
               <svg
@@ -22,53 +22,34 @@ export default function Footer() {
               </svg>
               HomeParadise
             </Link>
-            <p className="text-sm leading-relaxed opacity-75 max-w-[280px]">
-              A small boutique for flowers, plants, and handmade home goods —
-              crafted slowly, delivered thoughtfully.
+            <p className="text-[13px] leading-relaxed opacity-75 max-w-[280px] text-cream-deep mb-6">
+              A thoughtfully curated botanical boutique for flowers, plants, and
+              handmade home goods—crafted slowly, delivered with care.
             </p>
             {/* Socials */}
-            <div className="flex gap-3 mt-5">
+            <div className="flex gap-3">
               {[
                 {
-                  label: 'Instagram',
-                  path: (
-                    <>
-                      <rect x="3" y="3" width="18" height="18" rx="5" />
-                      <circle cx="12" cy="12" r="4" />
-                      <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" />
-                    </>
-                  ),
+                  label: "Instagram",
+                  icon: "M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 12H4V6h16v10zm-8-5.5c2.49 0 4.5-2.01 4.5-4.5S14.49 2 12 2 7.5 4.01 7.5 6.5 9.51 11 12 11z",
                 },
                 {
-                  label: 'Pinterest',
-                  path: (
-                    <>
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M11 8v9m1-5c.5-2 2-3 3-3" />
-                    </>
-                  ),
+                  label: "Pinterest",
+                  icon: "M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2m0-2C6.48 0 2 4.48 2 10s4.48 10 10 10 10-4.48 10-10S17.52 0 12 0z",
                 },
                 {
-                  label: 'Facebook',
-                  path: (
-                    <path d="M16 4h-3a4 4 0 0 0-4 4v3H6v4h3v9h4v-9h3l1-4h-4V8a1 1 0 0 1 1-1h3z" />
-                  ),
+                  label: "Facebook",
+                  icon: "M16 4H14c-1.1 0-2 .9-2 2v2h-2v2.5h2V20h2.5v-9.5H17V8h-2.5V6c0-.55.45-1 1-1h1.5V4z",
                 },
-              ].map(({ label, path }) => (
+              ].map(({ label, icon }) => (
                 <a
                   key={label}
                   href="#"
                   aria-label={label}
-                  className="w-9 h-9 rounded-full border border-white/20 inline-flex items-center justify-center hover:bg-sage-dark hover:border-sage-dark transition-colors duration-300"
+                  className="w-9 h-9 rounded-full border border-cream/20 inline-flex items-center justify-center hover:bg-sage-dark hover:border-sage-dark hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
                 >
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="w-4 h-4 stroke-current fill-none"
-                    strokeWidth={1.6}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    {path}
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 fill-cream">
+                    <path d={icon} />
                   </svg>
                 </a>
               ))}
@@ -78,32 +59,32 @@ export default function Footer() {
           {/* Links */}
           {[
             {
-              heading: 'Shop',
-              links: ['Flowers', 'Plants', 'Soaps', 'Gifts', 'New Arrivals'],
+              heading: "Shop",
+              links: ["Flowers", "Plants", "Soaps", "Gifts", "New Arrivals"],
             },
             {
-              heading: 'About',
-              links: ['Our Story', 'Sustainability', 'Journal', 'Careers'],
+              heading: "About",
+              links: ["Our Story", "Sustainability", "Journal", "Careers"],
             },
             {
-              heading: 'Help',
-              links: ['Contact', 'Shipping', 'Returns', 'Plant Care', 'FAQ'],
+              heading: "Help",
+              links: ["Contact", "Shipping", "Returns", "Plant Care", "FAQ"],
             },
             {
-              heading: 'Connect',
-              links: ['Instagram', 'Pinterest', 'Facebook', 'TikTok'],
+              heading: "Connect",
+              links: ["Instagram", "Pinterest", "Facebook", "TikTok"],
             },
           ].map(({ heading, links }) => (
             <div key={heading}>
-              <h4 className="font-sans text-white text-[13px] font-semibold tracking-widest uppercase mb-5">
+              <h4 className="font-sans text-cream text-[12px] font-bold tracking-wider uppercase mb-6 opacity-90">
                 {heading}
               </h4>
-              <ul className="space-y-3">
+              <ul className="space-y-2.5">
                 {links.map((l) => (
                   <li key={l}>
                     <Link
                       href="#"
-                      className="text-sm hover:text-sage-light transition-colors duration-300"
+                      className="text-[13px] text-cream-deep hover:text-sage-light transition-colors duration-300 hover:translate-x-1 inline-block"
                     >
                       {l}
                     </Link>
@@ -115,17 +96,19 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-white/10 pt-7 flex flex-wrap justify-between items-center gap-4 text-[13px] opacity-60">
-          <span>© 2026 HomeParadise. All rights reserved.</span>
-          <span className="flex gap-4">
+        <div className="border-t border-white/10 pt-8 flex flex-wrap justify-between items-center gap-4 text-[12px] text-cream-deep">
+          <span className="opacity-70">
+            © 2026 HomeParadise. All rights reserved.
+          </span>
+          <span className="flex gap-6">
             <Link href="#" className="hover:text-sage-light transition-colors">
-              Privacy
+              Privacy Policy
             </Link>
             <Link href="#" className="hover:text-sage-light transition-colors">
-              Terms
+              Terms of Service
             </Link>
             <Link href="#" className="hover:text-sage-light transition-colors">
-              Cookies
+              Cookie Policy
             </Link>
           </span>
         </div>
