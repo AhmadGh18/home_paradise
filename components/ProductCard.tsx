@@ -59,7 +59,7 @@ export default function ProductCard({ product }: Props) {
             <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z" />
           </svg>
         </button>
-        <Link href={`/products/${product.id}`}>
+        <Link href={`/products/${product.id}`} className="relative block w-full h-full">
           <Image
             src={
               product.image
