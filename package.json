@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:seed": "npx tsx lib/seed.ts"
+    "db:seed": "node --env-file=.env.local --import tsx lib/seed.ts"
   },
   "dependencies": {
     "@vercel/postgres": "^0.10.0",
