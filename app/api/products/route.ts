@@ -25,23 +25,32 @@ export async function POST(request: Request) {
     if (contentType.includes("multipart/form-data")) {
       const form = await request.formData();
       body = {} as any;
-      form.forEach((val, key) => {
-        if (key === "image" && val instanceof File) {
-          // convert file to data URL
-          // @ts-ignore Buffer exists in Node
-          const f = val as File;
-          // read file as arrayBuffer
-          // Need to await per-file reading
-        } else {
-          body[key] = String(val);
-        }
-      });
+      for (const [key, val] of form.entries()) {
+        if (key === "image") continue; // handle below
+        body[key] = String(val);
+      }
 
       const imageFile = form.get("image") as File | null;
       if (imageFile && imageFile.size > 0) {
         const ab = await imageFile.arrayBuffer();
-        const b = Buffer.from(ab);
-        imageValue = `data:${imageFile.type};base64,${b.toString("base64")}`;
+        // runtime-safe conversion to base64
+        const toBase64 = (arrayBuffer: ArrayBuffer) => {
+          if (typeof Buffer !== "undefined")
+            return Buffer.from(arrayBuffer).toString("base64");
+          const bytes = new Uint8Array(arrayBuffer);
+          let binary = "";
+          const chunkSize = 0x8000;
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            binary += String.fromCharCode.apply(
+              null,
+              Array.from(bytes.subarray(i, i + chunkSize)),
+            );
+          }
+          return globalThis.btoa(binary);
+        };
+
+        const base64 = toBase64(ab);
+        imageValue = `data:${imageFile.type};base64,${base64}`;
       }
     } else {
       body = await request.json();
@@ -60,7 +69,7 @@ export async function POST(request: Request) {
       originalPrice: body.originalPrice
         ? Number(body.originalPrice)
         : undefined,
-      image: imageValue,
+      image: imageValue ?? body.image ?? "",
       categoryId: body.categoryId,
       categoryName: category?.name,
       badge: body.badge || undefined,

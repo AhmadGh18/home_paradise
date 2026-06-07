@@ -69,7 +69,6 @@ const testimonials = [
 
 export default function HomePage() {
   const featured = getFeaturedProducts();
-  console.log("all project : ", featured);
 
   return (
     <StoreLayout>

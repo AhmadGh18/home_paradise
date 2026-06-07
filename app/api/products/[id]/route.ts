@@ -26,16 +26,31 @@ export async function PUT(request: Request, { params }: Params) {
     if (contentType.includes("multipart/form-data")) {
       const form = await request.formData();
       body = {} as any;
-      form.forEach((val, key) => {
-        if (key === "image") return; // handle separately
+      for (const [key, val] of form.entries()) {
+        if (key === "image") continue;
         body[key] = String(val);
-      });
+      }
 
       const imageFile = form.get("image") as File | null;
       if (imageFile && imageFile.size > 0) {
         const ab = await imageFile.arrayBuffer();
-        const b = Buffer.from(ab);
-        imageValue = `data:${imageFile.type};base64,${b.toString("base64")}`;
+        const toBase64 = (arrayBuffer: ArrayBuffer) => {
+          if (typeof Buffer !== "undefined")
+            return Buffer.from(arrayBuffer).toString("base64");
+          const bytes = new Uint8Array(arrayBuffer);
+          let binary = "";
+          const chunkSize = 0x8000;
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            binary += String.fromCharCode.apply(
+              null,
+              Array.from(bytes.subarray(i, i + chunkSize)),
+            );
+          }
+          return globalThis.btoa(binary);
+        };
+
+        const base64 = toBase64(ab);
+        imageValue = `data:${imageFile.type};base64,${base64}`;
       }
     } else {
       body = await request.json();
