@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { db, generateId } from "@/lib/data";
+import { getOrders, addOrder, generateId } from "@/lib/data";
 import type { Order } from "@/lib/types";
 
 export async function GET() {
-  return NextResponse.json(db.orders);
+  return NextResponse.json(getOrders());
 }
 
 export async function POST(request: Request) {
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       createdAt: new Date().toISOString(),
     };
 
-    db.orders.push(order);
+    addOrder(order);
     return NextResponse.json(order, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });

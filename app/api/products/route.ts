@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { db, generateId } from "@/lib/data";
+import {
+  generateId,
+  getProducts,
+  addProduct,
+  getCategoryById,
+} from "@/lib/data";
 import type { Product } from "@/lib/types";
 
 export async function GET(request: Request) {
@@ -7,8 +12,7 @@ export async function GET(request: Request) {
   const categoryId = searchParams.get("categoryId");
   const featured = searchParams.get("featured");
 
-  let products = db.products;
-
+  let products = getProducts();
   if (categoryId)
     products = products.filter((p) => p.categoryId === categoryId);
   if (featured === "true") products = products.filter((p) => p.featured);
@@ -57,7 +61,7 @@ export async function POST(request: Request) {
       imageValue = body.image;
     }
 
-    const category = db.categories.find((c) => c.id === body.categoryId);
+    const category = getCategoryById(body.categoryId);
 
     const product: Product = {
       id: generateId("prod"),
@@ -78,7 +82,7 @@ export async function POST(request: Request) {
       createdAt: new Date().toISOString(),
     };
 
-    db.products.push(product);
+    addProduct(product);
     return NextResponse.json(product, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });

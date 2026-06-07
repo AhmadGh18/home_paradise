@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/data";
+import {
+  getProductById,
+  updateProduct,
+  deleteProduct,
+  getCategoryById,
+} from "@/lib/data";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -7,7 +12,7 @@ interface Params {
 
 export async function GET(_req: Request, { params }: Params) {
   const { id } = await params;
-  const product = db.products.find((p) => p.id === id);
+  const product = getProductById(id);
   if (!product)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(product);
@@ -15,8 +20,8 @@ export async function GET(_req: Request, { params }: Params) {
 
 export async function PUT(request: Request, { params }: Params) {
   const { id } = await params;
-  const idx = db.products.findIndex((p) => p.id === id);
-  if (idx === -1)
+  const existing = getProductById(id);
+  if (!existing)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   try {
@@ -57,11 +62,8 @@ export async function PUT(request: Request, { params }: Params) {
       imageValue = body.image;
     }
 
-    const category = db.categories.find((c) => c.id === body.categoryId);
-    const existing = db.products[idx];
-
-    db.products[idx] = {
-      ...existing,
+    const category = getCategoryById(body.categoryId);
+    const updated = updateProduct(id, {
       name: body.name ?? existing.name,
       slug: body.slug ?? existing.slug,
       description: body.description ?? existing.description,
@@ -79,9 +81,9 @@ export async function PUT(request: Request, { params }: Params) {
         body.featured !== undefined
           ? Boolean(body.featured)
           : existing.featured,
-    };
+    });
 
-    return NextResponse.json(db.products[idx]);
+    return NextResponse.json(updated);
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
@@ -89,10 +91,7 @@ export async function PUT(request: Request, { params }: Params) {
 
 export async function DELETE(_req: Request, { params }: Params) {
   const { id } = await params;
-  const idx = db.products.findIndex((p) => p.id === id);
-  if (idx === -1)
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  db.products.splice(idx, 1);
+  const ok = deleteProduct(id);
+  if (!ok) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ success: true });
 }
