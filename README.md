@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HomeParadise
 
-## Getting Started
+A Next.js + SQLite storefront with a protected admin panel.
 
-First, run the development server:
+## Getting started
 
 ```bash
+npm install
+cp .env.example .env.local       # then edit ADMIN_PASSWORD & SESSION_SECRET
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000>. The admin panel is at <http://localhost:3000/admin>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Name             | Required | Description                                                              |
+| ---------------- | -------- | ------------------------------------------------------------------------ |
+| `ADMIN_USERNAME` | yes      | Admin login username.                                                    |
+| `ADMIN_PASSWORD` | yes      | Admin login password.                                                    |
+| `SESSION_SECRET` | yes      | Random string used to HMAC-sign session cookies (>= 16 chars).           |
+| `DATABASE_FILE`  | no       | Path to the SQLite file. Defaults to `./data.sqlite`.                    |
 
-## Learn More
+Generate a secret with:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project layout
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+app/
+  api/                    REST endpoints (products, orders, categories, auth)
+  admin/                  Admin panel
+    login/                Public login page
+    (panel)/              Protected dashboard, products, orders
+  ...                     Public storefront routes
+lib/
+  db.ts                   SQLite connection + migrations
+  seed.ts                 Idempotent seed data (run with `npm run db:seed`)
+  api.ts                  Response & body-parsing helpers
+  auth/
+    session.ts            HMAC-signed session cookies (Edge-safe)
+    admin.ts              `requireAdmin()` + credential check
+  repo/                   Typed CRUD wrappers around the database
+proxy.ts                  Server-side guard for /admin/*
+```
 
-## Deploy on Vercel
+## Database
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Schema is created on first connection and is safe to run repeatedly. To
+populate sample data:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run db:seed
+```
+
+## Auth model
+
+* Login is enforced by `proxy.ts` for every `/admin/*` route.
+* Mutating API endpoints (`POST/PUT/PATCH/DELETE`) call `requireAdmin()` which
+  rejects unauthenticated requests with `401`.
+* Session cookies are HMAC-SHA-256 signed with `SESSION_SECRET`, expire after
+  24 hours, and are `httpOnly` + `sameSite=lax`.

@@ -60,17 +60,12 @@ const links = [
 export default function AdminSidebar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { logout, loading } = useAuth();
+  const { logout } = useAuth();
 
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
     await logout();
   };
-
-  // Don't render during loading
-  if (loading) {
-    return null;
-  }
 
   return (
     <>

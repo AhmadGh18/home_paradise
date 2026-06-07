@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import StoreLayout from "@/components/StoreLayout";
 import ProductCard from "@/components/ProductCard";
 import AddToCartButton from "./AddToCartButton";
-import { getProductById, getProducts } from "@/lib/data";
+import { findProductById, listProducts } from "@/lib/repo/products";
 import type { Product } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 
@@ -14,11 +14,11 @@ interface Props {
 
 export default async function ProductPage({ params }: Props) {
   const { id } = await params;
-  const product = getProductById(id);
+  const product = findProductById(id);
 
   if (!product) notFound();
 
-  const related = getProducts()
+  const related = listProducts()
     .filter(
       (p: Product) =>
         p.categoryId === product.categoryId && p.id !== product.id,

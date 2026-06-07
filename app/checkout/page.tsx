@@ -2,14 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/lib/utils";
 import StoreLayout from "@/components/StoreLayout";
 
 export default function CheckoutPage() {
-  const router = useRouter();
   const { state, clearCart, totalPrice } = useCart();
   const [form, setForm] = useState({
     name: "",
@@ -84,7 +82,7 @@ export default function CheckoutPage() {
       } else {
         setOrderError("Failed to place order. Please try again.");
       }
-    } catch (error) {
+    } catch {
       setOrderError("An error occurred. Please try again.");
     } finally {
       setSubmitting(false);

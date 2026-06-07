@@ -3,7 +3,7 @@ import Link from "next/link";
 import StoreLayout from "@/components/StoreLayout";
 import ProductCard from "@/components/ProductCard";
 import NewsletterForm from "@/components/NewsletterForm";
-import { getFeaturedProducts } from "@/lib/data";
+import { listProducts } from "@/lib/repo/products";
 import type { Product } from "@/lib/types";
 
 const categories = [
@@ -69,7 +69,7 @@ const testimonials = [
 ];
 
 export default function HomePage() {
-  const featured = getFeaturedProducts();
+  const featured = listProducts({ featured: true });
 
   return (
     <StoreLayout>

@@ -1,41 +1,30 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { createSession, sessionCookie } from "@/lib/auth/session";
+import { verifyCredentials } from "@/lib/auth/admin";
+import { badRequest } from "@/lib/api";
 
 export async function POST(request: NextRequest) {
+  let body: { username?: unknown; password?: unknown };
   try {
-    const body = await request.json();
-    const { username, password } = body;
+    body = await request.json();
+  } catch {
+    return badRequest();
+  }
 
-    // Get credentials from environment variables
-    const validUsername = process.env.admin_user;
-    const validPassword = process.env.admin_password;
+  const { username, password } = body;
+  if (typeof username !== "string" || typeof password !== "string") {
+    return badRequest("Username and password are required");
+  }
 
-    // Simple comparison (in production, you'd use more secure methods)
-    if (username === validUsername && password === validPassword) {
-      // Create response with session cookie
-      const response = NextResponse.json({
-        success: true,
-        message: "Login successful",
-      });
-
-      response.cookies.set("admin_session", "authenticated", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24, // 24 hours
-        path: "/",
-      });
-
-      return response;
-    }
-
+  if (!verifyCredentials(username, password)) {
     return NextResponse.json(
-      { success: false, message: "Invalid credentials" },
+      { error: "Invalid credentials" },
       { status: 401 },
     );
-  } catch {
-    return NextResponse.json(
-      { success: false, message: "Invalid request" },
-      { status: 400 },
-    );
   }
+
+  const token = await createSession(username);
+  const res = NextResponse.json({ success: true });
+  res.cookies.set(sessionCookie.name, token, sessionCookie.options);
+  return res;
 }

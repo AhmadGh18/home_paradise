@@ -1,91 +1,75 @@
-import { NextResponse } from "next/server";
+import { type NextRequest } from "next/server";
 import {
+  badRequest,
+  created,
   generateId,
-  getProducts,
-  addProduct,
-  getCategoryById,
-} from "@/lib/data";
+  ok,
+  parseRequestBody,
+  serverError,
+} from "@/lib/api";
+import { requireAdmin } from "@/lib/auth/admin";
+import { findCategoryById } from "@/lib/repo/categories";
+import { createProduct, listProducts } from "@/lib/repo/products";
 import type { Product } from "@/lib/types";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const categoryId = searchParams.get("categoryId");
-  const featured = searchParams.get("featured");
+  const categoryId = searchParams.get("categoryId") ?? undefined;
+  const featuredParam = searchParams.get("featured");
+  const featured =
+    featuredParam === "true" ? true : featuredParam === "false" ? false : undefined;
 
-  let products = getProducts();
-  if (categoryId)
-    products = products.filter((p: Product) => p.categoryId === categoryId);
-  if (featured === "true")
-    products = products.filter((p: Product) => p.featured);
-
-  return NextResponse.json(products);
+  return ok(listProducts({ categoryId, featured }));
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
+  let body: Record<string, unknown>;
   try {
-    let body: any;
-    let imageValue: string | undefined;
-
-    const contentType = request.headers.get("content-type") || "";
-    if (contentType.includes("multipart/form-data")) {
-      const form = await request.formData();
-      body = {} as any;
-      for (const [key, val] of form.entries()) {
-        if (key === "image") continue; // handle below
-        body[key] = String(val);
-      }
-
-      const imageFile = form.get("image") as File | null;
-      if (imageFile && imageFile.size > 0) {
-        const ab = await imageFile.arrayBuffer();
-        // runtime-safe conversion to base64
-        const toBase64 = (arrayBuffer: ArrayBuffer) => {
-          if (typeof Buffer !== "undefined")
-            return Buffer.from(arrayBuffer).toString("base64");
-          const bytes = new Uint8Array(arrayBuffer);
-          let binary = "";
-          const chunkSize = 0x8000;
-          for (let i = 0; i < bytes.length; i += chunkSize) {
-            binary += String.fromCharCode.apply(
-              null,
-              Array.from(bytes.subarray(i, i + chunkSize)),
-            );
-          }
-          return globalThis.btoa(binary);
-        };
-
-        const base64 = toBase64(ab);
-        imageValue = `data:${imageFile.type};base64,${base64}`;
-      }
-    } else {
-      body = await request.json();
-      imageValue = body.image;
-    }
-
-    const category = getCategoryById(body.categoryId);
-
-    const product: Product = {
-      id: generateId("prod"),
-      name: body.name,
-      slug: body.slug,
-      description: body.description,
-      details: body.details ?? "",
-      price: Number(body.price),
-      originalPrice: body.originalPrice
-        ? Number(body.originalPrice)
-        : undefined,
-      image: imageValue ?? body.image ?? "",
-      categoryId: body.categoryId,
-      categoryName: category?.name,
-      badge: body.badge || undefined,
-      stock: Number(body.stock),
-      featured: Boolean(body.featured),
-      createdAt: new Date().toISOString(),
-    };
-
-    addProduct(product);
-    return NextResponse.json(product, { status: 201 });
+    body = await parseRequestBody(request);
   } catch {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return badRequest();
+  }
+
+  const name = String(body.name ?? "").trim();
+  const slug = String(body.slug ?? "").trim();
+  const description = String(body.description ?? "").trim();
+  const categoryId = String(body.categoryId ?? "").trim();
+  const price = Number(body.price);
+  const stock = Number(body.stock);
+
+  if (!name || !slug || !description || !categoryId) {
+    return badRequest("name, slug, description and categoryId are required");
+  }
+  if (!Number.isFinite(price) || price < 0) return badRequest("Invalid price");
+  if (!Number.isInteger(stock) || stock < 0) return badRequest("Invalid stock");
+
+  const category = findCategoryById(categoryId);
+  if (!category) return badRequest("Unknown categoryId");
+
+  const product: Product = {
+    id: generateId("prod"),
+    name,
+    slug,
+    description,
+    details: body.details ? String(body.details) : undefined,
+    price,
+    originalPrice: body.originalPrice ? Number(body.originalPrice) : undefined,
+    image: body.image ? String(body.image) : "",
+    categoryId,
+    categoryName: category.name,
+    badge: body.badge ? String(body.badge) : undefined,
+    stock,
+    featured: body.featured === true || body.featured === "true",
+    createdAt: new Date().toISOString(),
+  };
+
+  try {
+    createProduct(product);
+    return created(product);
+  } catch {
+    return serverError("Failed to create product");
   }
 }

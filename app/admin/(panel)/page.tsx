@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { getProducts, getOrders } from "@/lib/data";
-import type { Order } from "@/lib/types";
-import type { Product } from "@/lib/types";
+import { listProducts } from "@/lib/repo/products";
+import { listOrders } from "@/lib/repo/orders";
+import type { Order, Product } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 
 export default function AdminDashboard() {
-  const products = getProducts();
-  const orders = getOrders();
+  const products = listProducts();
+  const orders = listOrders();
   const revenue = orders.reduce((sum: number, o: Order) => sum + o.total, 0);
   const recentOrders = [...orders]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))

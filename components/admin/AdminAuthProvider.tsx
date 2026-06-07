@@ -1,62 +1,54 @@
 "use client";
 
-import { useState, useEffect, createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-type AuthContextType = {
-  isAuthenticated: boolean | null;
+interface AuthState {
+  username: string | null;
   loading: boolean;
   logout: () => Promise<void>;
-};
+}
 
-const AuthContext = createContext<AuthContextType>({
-  isAuthenticated: null,
+const AuthContext = createContext<AuthState>({
+  username: null,
   loading: true,
   logout: async () => {},
 });
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+export const useAuth = () => useContext(AuthContext);
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
-    setIsAuthenticated(false);
-    router.push("/admin/login");
+    setUsername(null);
+    router.replace("/admin/login");
+    router.refresh();
   };
 
   useEffect(() => {
-    const checkAuth = async () => {
+    let cancelled = false;
+    (async () => {
       try {
         const res = await fetch("/api/auth/me");
-        if (res.ok) {
+        if (!cancelled && res.ok) {
           const data = await res.json();
-          const authenticated = data.authenticated;
-          setIsAuthenticated(authenticated);
-          if (!authenticated) {
-            router.push("/admin/login");
-          }
-        } else {
-          setIsAuthenticated(false);
-          router.push("/admin/login");
+          setUsername(data.user?.username ?? null);
         }
-      } catch {
-        setIsAuthenticated(false);
-        router.push("/admin/login");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
+    })();
+    return () => {
+      cancelled = true;
     };
-    checkAuth();
-  }, [router]);
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, loading, logout }}>
+    <AuthContext.Provider value={{ username, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,5 +1,7 @@
-import { NextResponse } from "next/server";
-import { getOrderById, updateOrderStatus } from "@/lib/data";
+import { type NextRequest } from "next/server";
+import { badRequest, notFound, ok, serverError } from "@/lib/api";
+import { requireAdmin } from "@/lib/auth/admin";
+import { findOrderById, updateOrderStatusById } from "@/lib/repo/orders";
 import type { OrderStatus } from "@/lib/types";
 
 const VALID_STATUSES: OrderStatus[] = [
@@ -10,36 +12,40 @@ const VALID_STATUSES: OrderStatus[] = [
   "cancelled",
 ];
 
-interface Params {
+interface Context {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(_req: Request, { params }: Params) {
+export async function GET(request: NextRequest, { params }: Context) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   const { id } = await params;
-  const order = getOrderById(id);
-  if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(order);
+  const order = findOrderById(id);
+  return order ? ok(order) : notFound();
 }
 
-export async function PATCH(request: Request, { params }: Params) {
+export async function PATCH(request: NextRequest, { params }: Context) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   const { id } = await params;
-  const existing = getOrderById(id);
-  if (!existing)
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  let body: { status?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return badRequest();
+  }
+
+  const status = body.status;
+  if (typeof status !== "string" || !VALID_STATUSES.includes(status as OrderStatus)) {
+    return badRequest("Invalid status");
+  }
 
   try {
-    const body = await request.json();
-    const { status } = body;
-
-    if (status && !VALID_STATUSES.includes(status)) {
-      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
-    }
-
-    const updated = updateOrderStatus(id, status);
-    if (!updated)
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json(updated);
+    const updated = updateOrderStatusById(id, status as OrderStatus);
+    return updated ? ok(updated) : notFound();
   } catch {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return serverError("Failed to update order");
   }
 }

@@ -1,10 +1,11 @@
-import { getProducts, getCategories } from '@/lib/data';
-import StoreLayout from '@/components/StoreLayout';
-import ShopClient from './ShopClient';
+import StoreLayout from "@/components/StoreLayout";
+import { listCategories } from "@/lib/repo/categories";
+import { listProducts } from "@/lib/repo/products";
+import ShopClient from "./ShopClient";
 
 export default function ShopPage() {
-  const products = getProducts();
-  const categories = getCategories();
+  const products = listProducts();
+  const categories = listCategories();
 
   return (
     <StoreLayout>

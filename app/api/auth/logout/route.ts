@@ -1,18 +1,11 @@
 import { NextResponse } from "next/server";
+import { sessionCookie } from "@/lib/auth/session";
 
 export async function POST() {
-  const response = NextResponse.json({
-    success: true,
-    message: "Logged out successfully",
-  });
-
-  response.cookies.set("admin_session", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+  const res = NextResponse.json({ success: true });
+  res.cookies.set(sessionCookie.name, "", {
+    ...sessionCookie.options,
     maxAge: 0,
-    path: "/",
   });
-
-  return response;
+  return res;
 }

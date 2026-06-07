@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { getCategories } from "@/lib/data";
+import { ok } from "@/lib/api";
+import { listCategories } from "@/lib/repo/categories";
 
 export async function GET() {
-  return NextResponse.json(getCategories());
+  return ok(listCategories());
 }
