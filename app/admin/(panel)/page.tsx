@@ -4,9 +4,10 @@ import { listOrders } from "@/lib/repo/orders";
 import type { Order, Product } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 
-export default function AdminDashboard() {
-  const products = listProducts();
-  const orders = listOrders();
+export const dynamic = "force-dynamic";
+
+export default async function AdminDashboard() {
+  const [products, orders] = await Promise.all([listProducts(), listOrders()]);
   const revenue = orders.reduce((sum: number, o: Order) => sum + o.total, 0);
   const recentOrders = [...orders]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))

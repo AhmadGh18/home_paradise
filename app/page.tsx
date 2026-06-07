@@ -2,9 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import StoreLayout from "@/components/StoreLayout";
 import ProductCard from "@/components/ProductCard";
-import NewsletterForm from "@/components/NewsletterForm";
 import { listProducts } from "@/lib/repo/products";
 import type { Product } from "@/lib/types";
+
+export const dynamic = "force-dynamic";
 
 const categories = [
   {
@@ -68,8 +69,8 @@ const testimonials = [
   },
 ];
 
-export default function HomePage() {
-  const featured = listProducts({ featured: true });
+export default async function HomePage() {
+  const featured = await listProducts({ featured: true });
 
   return (
     <StoreLayout>
@@ -308,24 +309,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Newsletter ── */}
-      <section className="py-24 bg-gradient-to-br from-sage-light to-sage-light/80">
-        <div className="max-w-[1240px] mx-auto px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-12">
-            <div>
-              <h2 className="font-serif text-[clamp(32px,4vw,48px)] text-ink mb-3">
-                Join the garden.
-              </h2>
-              <p className="text-ink-soft text-[15px] font-medium">
-                Early access, seasonal guides, and 10% off your first order.
-              </p>
-            </div>
-            <div className="w-full md:w-auto">
-              <NewsletterForm />
-            </div>
-          </div>
-        </div>
-      </section>
     </StoreLayout>
   );
 }

@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   const featured =
     featuredParam === "true" ? true : featuredParam === "false" ? false : undefined;
 
-  return ok(listProducts({ categoryId, featured }));
+  return ok(await listProducts({ categoryId, featured }));
 }
 
 export async function POST(request: NextRequest) {
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
   if (!Number.isFinite(price) || price < 0) return badRequest("Invalid price");
   if (!Number.isInteger(stock) || stock < 0) return badRequest("Invalid stock");
 
-  const category = findCategoryById(categoryId);
+  const category = await findCategoryById(categoryId);
   if (!category) return badRequest("Unknown categoryId");
 
   const product: Product = {
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
   };
 
   try {
-    createProduct(product);
+    await createProduct(product);
     return created(product);
   } catch {
     return serverError("Failed to create product");

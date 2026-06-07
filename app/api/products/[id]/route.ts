@@ -21,7 +21,7 @@ interface Context {
 
 export async function GET(_req: NextRequest, { params }: Context) {
   const { id } = await params;
-  const product = findProductById(id);
+  const product = await findProductById(id);
   return product ? ok(product) : notFound();
 }
 
@@ -30,7 +30,7 @@ export async function PUT(request: NextRequest, { params }: Context) {
   if (denied) return denied;
 
   const { id } = await params;
-  const existing = findProductById(id);
+  const existing = await findProductById(id);
   if (!existing) return notFound();
 
   let body: Record<string, unknown>;
@@ -66,14 +66,14 @@ export async function PUT(request: NextRequest, { params }: Context) {
     patch.stock = stock;
   }
   if (body.categoryId !== undefined) {
-    const category = findCategoryById(String(body.categoryId));
+    const category = await findCategoryById(String(body.categoryId));
     if (!category) return badRequest("Unknown categoryId");
     patch.categoryId = category.id;
     patch.categoryName = category.name;
   }
 
   try {
-    const updated = updateProductById(id, patch);
+    const updated = await updateProductById(id, patch);
     return updated ? ok(updated) : notFound();
   } catch {
     return serverError("Failed to update product");
@@ -85,5 +85,5 @@ export async function DELETE(request: NextRequest, { params }: Context) {
   if (denied) return denied;
 
   const { id } = await params;
-  return deleteProductById(id) ? ok({ success: true }) : notFound();
+  return (await deleteProductById(id)) ? ok({ success: true }) : notFound();
 }

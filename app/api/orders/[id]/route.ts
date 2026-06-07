@@ -21,7 +21,7 @@ export async function GET(request: NextRequest, { params }: Context) {
   if (denied) return denied;
 
   const { id } = await params;
-  const order = findOrderById(id);
+  const order = await findOrderById(id);
   return order ? ok(order) : notFound();
 }
 
@@ -43,7 +43,7 @@ export async function PATCH(request: NextRequest, { params }: Context) {
   }
 
   try {
-    const updated = updateOrderStatusById(id, status as OrderStatus);
+    const updated = await updateOrderStatusById(id, status as OrderStatus);
     return updated ? ok(updated) : notFound();
   } catch {
     return serverError("Failed to update order");

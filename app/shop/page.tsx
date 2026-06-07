@@ -3,9 +3,13 @@ import { listCategories } from "@/lib/repo/categories";
 import { listProducts } from "@/lib/repo/products";
 import ShopClient from "./ShopClient";
 
-export default function ShopPage() {
-  const products = listProducts();
-  const categories = listCategories();
+export const dynamic = "force-dynamic";
+
+export default async function ShopPage() {
+  const [products, categories] = await Promise.all([
+    listProducts(),
+    listCategories(),
+  ]);
 
   return (
     <StoreLayout>

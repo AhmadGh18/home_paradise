@@ -7,7 +7,7 @@ import type { Order, OrderItem } from "@/lib/types";
 export async function GET(request: NextRequest) {
   const denied = await requireAdmin(request);
   if (denied) return denied;
-  return ok(listOrders());
+  return ok(await listOrders());
 }
 
 export async function POST(request: NextRequest) {
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
   };
 
   try {
-    createOrder(order);
+    await createOrder(order);
     return created(order);
   } catch {
     return serverError("Failed to create order");

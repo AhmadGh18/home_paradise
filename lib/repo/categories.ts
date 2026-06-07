@@ -1,14 +1,18 @@
-import { getDb } from "../db";
+import { sql } from "../db";
 import type { Category } from "../types";
 
-export function listCategories(): Category[] {
-  return getDb()
-    .prepare("SELECT id, name, slug, image, description FROM categories ORDER BY name")
-    .all() as Category[];
+export async function listCategories(): Promise<Category[]> {
+  const { rows } = await sql`
+    SELECT id, name, slug, image, description
+    FROM categories ORDER BY name
+  `;
+  return rows as Category[];
 }
 
-export function findCategoryById(id: string): Category | undefined {
-  return getDb()
-    .prepare("SELECT id, name, slug, image, description FROM categories WHERE id = ?")
-    .get(id) as Category | undefined;
+export async function findCategoryById(id: string): Promise<Category | undefined> {
+  const { rows } = await sql`
+    SELECT id, name, slug, image, description
+    FROM categories WHERE id = ${id}
+  `;
+  return rows[0] as Category | undefined;
 }

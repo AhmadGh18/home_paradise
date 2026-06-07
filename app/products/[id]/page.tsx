@@ -8,26 +8,28 @@ import { findProductById, listProducts } from "@/lib/repo/products";
 import type { Product } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   params: Promise<{ id: string }>;
 }
 
 export default async function ProductPage({ params }: Props) {
   const { id } = await params;
-  const product = findProductById(id);
+  const product = await findProductById(id);
 
   if (!product) notFound();
 
-  const related = listProducts()
+  const allProducts = await listProducts();
+  const related = allProducts
     .filter(
       (p: Product) =>
-        p.categoryId === product.categoryId && p.id !== product.id,
+        p.categoryId === product?.categoryId && p.id !== product.id,
     )
     .slice(0, 4);
 
   return (
     <StoreLayout>
-      {/* Breadcrumb */}
       <nav className="max-w-[1240px] mx-auto px-6 pt-8 pb-2 text-[13px] text-ink-soft flex items-center gap-2">
         <Link href="/" className="hover:text-sage-dark transition-colors">
           Home
@@ -40,10 +42,8 @@ export default async function ProductPage({ params }: Props) {
         <span className="text-ink">{product.name}</span>
       </nav>
 
-      {/* Product detail */}
       <section className="max-w-[1240px] mx-auto px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
-          {/* Image */}
           <div className="relative aspect-square rounded-[28px] overflow-hidden shadow-[0_6px_24px_rgba(46,52,45,0.1)]">
             {product.badge && (
               <span className="absolute top-5 left-5 z-10 bg-white text-terracotta text-[11px] font-semibold tracking-wide uppercase px-3 py-1.5 rounded-full">
@@ -60,7 +60,6 @@ export default async function ProductPage({ params }: Props) {
             />
           </div>
 
-          {/* Info */}
           <div className="flex flex-col justify-center">
             {product.categoryName && (
               <span className="inline-block text-[12px] tracking-[3px] uppercase text-sage-dark font-medium mb-4">
@@ -89,7 +88,6 @@ export default async function ProductPage({ params }: Props) {
               </p>
             )}
 
-            {/* Stock indicator */}
             <div className="flex items-center gap-2 mb-6 text-sm">
               <span
                 className={`w-2.5 h-2.5 rounded-full ${product.stock > 5 ? "bg-sage" : product.stock > 0 ? "bg-terracotta-soft" : "bg-red-400"}`}
@@ -105,7 +103,6 @@ export default async function ProductPage({ params }: Props) {
 
             <AddToCartButton product={product} />
 
-            {/* Perks */}
             <div className="grid grid-cols-3 gap-4 mt-8 pt-8 border-t border-beige">
               {[
                 { icon: "🌿", label: "Sustainably sourced" },
@@ -125,7 +122,6 @@ export default async function ProductPage({ params }: Props) {
         </div>
       </section>
 
-      {/* Related */}
       {related.length > 0 && (
         <section className="bg-cream-deep py-20">
           <div className="max-w-[1240px] mx-auto px-6">
