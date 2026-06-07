@@ -1,11 +1,12 @@
-import Image from 'next/image';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import StoreLayout from '@/components/StoreLayout';
-import ProductCard from '@/components/ProductCard';
-import AddToCartButton from './AddToCartButton';
-import { getProductById, getProducts } from '@/lib/data';
-import { formatPrice } from '@/lib/utils';
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import StoreLayout from "@/components/StoreLayout";
+import ProductCard from "@/components/ProductCard";
+import AddToCartButton from "./AddToCartButton";
+import { getProductById, getProducts } from "@/lib/data";
+import type { Product } from "@/lib/types";
+import { formatPrice } from "@/lib/utils";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -18,16 +19,23 @@ export default async function ProductPage({ params }: Props) {
   if (!product) notFound();
 
   const related = getProducts()
-    .filter((p) => p.categoryId === product.categoryId && p.id !== product.id)
+    .filter(
+      (p: Product) =>
+        p.categoryId === product.categoryId && p.id !== product.id,
+    )
     .slice(0, 4);
 
   return (
     <StoreLayout>
       {/* Breadcrumb */}
       <nav className="max-w-[1240px] mx-auto px-6 pt-8 pb-2 text-[13px] text-ink-soft flex items-center gap-2">
-        <Link href="/" className="hover:text-sage-dark transition-colors">Home</Link>
+        <Link href="/" className="hover:text-sage-dark transition-colors">
+          Home
+        </Link>
         <span>/</span>
-        <Link href="/shop" className="hover:text-sage-dark transition-colors">Shop</Link>
+        <Link href="/shop" className="hover:text-sage-dark transition-colors">
+          Shop
+        </Link>
         <span>/</span>
         <span className="text-ink">{product.name}</span>
       </nav>
@@ -63,9 +71,13 @@ export default async function ProductPage({ params }: Props) {
               {product.name}
             </h1>
             <div className="flex items-baseline gap-3 mb-6">
-              <span className="text-[28px] font-semibold text-sage-dark">{formatPrice(product.price)}</span>
+              <span className="text-[28px] font-semibold text-sage-dark">
+                {formatPrice(product.price)}
+              </span>
               {product.originalPrice && (
-                <span className="text-[18px] text-ink-soft line-through">{formatPrice(product.originalPrice)}</span>
+                <span className="text-[18px] text-ink-soft line-through">
+                  {formatPrice(product.originalPrice)}
+                </span>
               )}
             </div>
             <p className="text-base text-ink-soft leading-relaxed mb-4">
@@ -79,13 +91,15 @@ export default async function ProductPage({ params }: Props) {
 
             {/* Stock indicator */}
             <div className="flex items-center gap-2 mb-6 text-sm">
-              <span className={`w-2.5 h-2.5 rounded-full ${product.stock > 5 ? 'bg-sage' : product.stock > 0 ? 'bg-terracotta-soft' : 'bg-red-400'}`} />
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${product.stock > 5 ? "bg-sage" : product.stock > 0 ? "bg-terracotta-soft" : "bg-red-400"}`}
+              />
               <span className="text-ink-soft">
                 {product.stock > 5
-                  ? 'In stock'
+                  ? "In stock"
                   : product.stock > 0
-                  ? `Only ${product.stock} left`
-                  : 'Out of stock'}
+                    ? `Only ${product.stock} left`
+                    : "Out of stock"}
               </span>
             </div>
 
@@ -94,11 +108,14 @@ export default async function ProductPage({ params }: Props) {
             {/* Perks */}
             <div className="grid grid-cols-3 gap-4 mt-8 pt-8 border-t border-beige">
               {[
-                { icon: '🌿', label: 'Sustainably sourced' },
-                { icon: '📦', label: 'Plastic-free packaging' },
-                { icon: '🚚', label: 'Free delivery over $60' },
+                { icon: "🌿", label: "Sustainably sourced" },
+                { icon: "📦", label: "Plastic-free packaging" },
+                { icon: "🚚", label: "Free delivery over $60" },
               ].map(({ icon, label }) => (
-                <div key={label} className="text-center text-[12px] text-ink-soft leading-snug">
+                <div
+                  key={label}
+                  className="text-center text-[12px] text-ink-soft leading-snug"
+                >
                   <span className="text-xl block mb-1">{icon}</span>
                   {label}
                 </div>
@@ -116,7 +133,7 @@ export default async function ProductPage({ params }: Props) {
               You might also like
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
-              {related.map((p) => (
+              {related.map((p: Product) => (
                 <ProductCard key={p.id} product={p} />
               ))}
             </div>

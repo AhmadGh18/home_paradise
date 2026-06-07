@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { getProducts, getOrders } from "@/lib/data";
+import type { Order } from "@/lib/types";
+import type { Product } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 
 export default function AdminDashboard() {
   const products = getProducts();
   const orders = getOrders();
-  const revenue = orders.reduce((sum, o) => sum + o.total, 0);
+  const revenue = orders.reduce((sum: number, o: Order) => sum + o.total, 0);
   const recentOrders = [...orders]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, 5);
@@ -75,7 +77,7 @@ export default function AdminDashboard() {
     },
     {
       label: "Low Stock",
-      value: products.filter((p) => p.stock <= 5).length,
+      value: products.filter((p: Product) => p.stock <= 5).length,
       href: "/admin/products",
       icon: (
         <svg

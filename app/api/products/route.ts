@@ -14,8 +14,9 @@ export async function GET(request: Request) {
 
   let products = getProducts();
   if (categoryId)
-    products = products.filter((p) => p.categoryId === categoryId);
-  if (featured === "true") products = products.filter((p) => p.featured);
+    products = products.filter((p: Product) => p.categoryId === categoryId);
+  if (featured === "true")
+    products = products.filter((p: Product) => p.featured);
 
   return NextResponse.json(products);
 }

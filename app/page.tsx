@@ -4,6 +4,7 @@ import StoreLayout from "@/components/StoreLayout";
 import ProductCard from "@/components/ProductCard";
 import NewsletterForm from "@/components/NewsletterForm";
 import { getFeaturedProducts } from "@/lib/data";
+import type { Product } from "@/lib/types";
 
 const categories = [
   {
@@ -179,7 +180,7 @@ export default function HomePage() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featured.map((product) => (
+            {featured.map((product: Product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

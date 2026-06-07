@@ -261,7 +261,7 @@ if (useSqlite) {
     // eslint-disable-next-line no-console
     console.warn(
       "SQLite initialization failed, falling back to in-memory store.",
-      e?.message ?? e,
+      e instanceof Error ? e.message : String(e),
     );
   }
 }
