@@ -43,7 +43,12 @@ export default function Navbar() {
           className="font-serif text-[26px] font-semibold text-sage-dark flex items-center gap-2.5 leading-none hover:opacity-80 transition-opacity"
           aria-label="HomeParadise home"
         >
-          <Image height={82}  className="object-contain" src={image} alt="logo" />
+          <Image
+            src={image}
+            alt="HomeParadise logo"
+            priority
+            className="h-14 w-auto object-contain -my-2"
+          />
           <span className="hidden sm:inline">HomeParadise</span>
         </Link>
 
