@@ -7,11 +7,16 @@ import type { Product, Category } from '@/lib/types';
 interface Props {
   products: Product[];
   categories: Category[];
+  initialCategory?: string;
 }
 
-export default function ShopClient({ products, categories }: Props) {
+export default function ShopClient({
+  products,
+  categories,
+  initialCategory = 'all',
+}: Props) {
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [activeCategory, setActiveCategory] = useState<string>(initialCategory);
   const [sortBy, setSortBy] = useState<'default' | 'price-asc' | 'price-desc' | 'newest'>('default');
 
   const filtered = useMemo(() => {

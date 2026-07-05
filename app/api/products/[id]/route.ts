@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { type NextRequest } from "next/server";
 import {
   badRequest,
@@ -11,6 +12,8 @@ import { findCategoryById } from "@/lib/repo/categories";
 import {
   deleteProductById,
   findProductById,
+  findProductByIdFresh,
+  PRODUCTS_TAG,
   updateProductById,
 } from "@/lib/repo/products";
 import type { Product } from "@/lib/types";
@@ -30,7 +33,7 @@ export async function PUT(request: NextRequest, { params }: Context) {
   if (denied) return denied;
 
   const { id } = await params;
-  const existing = await findProductById(id);
+  const existing = await findProductByIdFresh(id);
   if (!existing) return notFound();
 
   let body: Record<string, unknown>;
@@ -74,6 +77,7 @@ export async function PUT(request: NextRequest, { params }: Context) {
 
   try {
     const updated = await updateProductById(id, patch);
+    if (updated) revalidateTag(PRODUCTS_TAG);
     return updated ? ok(updated) : notFound();
   } catch {
     return serverError("Failed to update product");
@@ -85,5 +89,7 @@ export async function DELETE(request: NextRequest, { params }: Context) {
   if (denied) return denied;
 
   const { id } = await params;
-  return (await deleteProductById(id)) ? ok({ success: true }) : notFound();
+  const deleted = await deleteProductById(id);
+  if (deleted) revalidateTag(PRODUCTS_TAG);
+  return deleted ? ok({ success: true }) : notFound();
 }

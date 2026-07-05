@@ -7,13 +7,27 @@ import {
   parseRequestBody,
   serverError,
 } from "@/lib/api";
+import { revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth/admin";
 import { findCategoryById } from "@/lib/repo/categories";
-import { createProduct, listProducts } from "@/lib/repo/products";
+import {
+  createProduct,
+  findProductsByIds,
+  listProducts,
+  PRODUCTS_TAG,
+} from "@/lib/repo/products";
 import type { Product } from "@/lib/types";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
+
+  // `?ids=a,b,c` — used by the cart to refresh its stored product snapshots.
+  const idsParam = searchParams.get("ids");
+  if (idsParam !== null) {
+    const ids = idsParam.split(",").map((s) => s.trim()).filter(Boolean);
+    return ok(await findProductsByIds(ids));
+  }
+
   const categoryId = searchParams.get("categoryId") ?? undefined;
   const featuredParam = searchParams.get("featured");
   const featured =
@@ -68,6 +82,7 @@ export async function POST(request: NextRequest) {
 
   try {
     await createProduct(product);
+    revalidateTag(PRODUCTS_TAG);
     return created(product);
   } catch {
     return serverError("Failed to create product");

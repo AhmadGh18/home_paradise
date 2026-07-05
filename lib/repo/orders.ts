@@ -1,6 +1,14 @@
 import { sql } from "../db";
 import type { Order, OrderItem, OrderStatus } from "../types";
 
+/** Thrown when an order cannot be fulfilled because an item is out of stock. */
+export class OutOfStockError extends Error {
+  constructor(public readonly productName: string) {
+    super(`Insufficient stock for "${productName}"`);
+    this.name = "OutOfStockError";
+  }
+}
+
 interface OrderRow {
   id: string;
   customerName: string;
@@ -54,6 +62,40 @@ export async function createOrder(o: Order): Promise<Order> {
             ${o.createdAt})
   `;
   return o;
+}
+
+/**
+ * Creates an order and decrements product stock atomically-enough for a
+ * low-concurrency store: each item's stock is decremented with a guarded
+ * `stock >= quantity` condition so two racing orders can't oversell. If any
+ * item is short, previously-decremented items are restored and an
+ * {@link OutOfStockError} is thrown. The `@vercel/postgres` pooled client does
+ * not expose interactive transactions, so we compensate manually instead.
+ */
+export async function createOrderWithInventory(o: Order): Promise<Order> {
+  const decremented: OrderItem[] = [];
+  try {
+    for (const item of o.items) {
+      const res = await sql`
+        UPDATE products SET stock = stock - ${item.quantity}
+        WHERE id = ${item.productId} AND stock >= ${item.quantity}
+      `;
+      if ((res.rowCount ?? 0) === 0) {
+        throw new OutOfStockError(item.productName);
+      }
+      decremented.push(item);
+    }
+    await createOrder(o);
+    return o;
+  } catch (err) {
+    for (const item of decremented) {
+      await sql`
+        UPDATE products SET stock = stock + ${item.quantity}
+        WHERE id = ${item.productId}
+      `;
+    }
+    throw err;
+  }
 }
 
 export async function updateOrderStatusById(

@@ -31,20 +31,25 @@ export default function Footer() {
               {[
                 {
                   label: "Instagram",
+                  href: "https://instagram.com",
                   icon: "M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 12H4V6h16v10zm-8-5.5c2.49 0 4.5-2.01 4.5-4.5S14.49 2 12 2 7.5 4.01 7.5 6.5 9.51 11 12 11z",
                 },
                 {
                   label: "Pinterest",
+                  href: "https://pinterest.com",
                   icon: "M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2m0-2C6.48 0 2 4.48 2 10s4.48 10 10 10 10-4.48 10-10S17.52 0 12 0z",
                 },
                 {
                   label: "Facebook",
+                  href: "https://facebook.com",
                   icon: "M16 4H14c-1.1 0-2 .9-2 2v2h-2v2.5h2V20h2.5v-9.5H17V8h-2.5V6c0-.55.45-1 1-1h1.5V4z",
                 },
-              ].map(({ label, icon }) => (
+              ].map(({ label, href, icon }) => (
                 <a
                   key={label}
-                  href="#"
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label={label}
                   className="w-9 h-9 rounded-full border border-cream/20 inline-flex items-center justify-center hover:bg-sage-dark hover:border-sage-dark hover:shadow-lg transition-all duration-300 hover:scale-110 active:scale-95"
                 >
@@ -60,19 +65,41 @@ export default function Footer() {
           {[
             {
               heading: "Shop",
-              links: ["Flowers", "Plants", "Soaps", "Gifts", "New Arrivals"],
+              links: [
+                { label: "Flowers", href: "/shop?category=flowers" },
+                { label: "Plants", href: "/shop?category=plants" },
+                { label: "Soaps", href: "/shop?category=soaps" },
+                { label: "Gifts", href: "/shop?category=gifts" },
+                { label: "New Arrivals", href: "/shop" },
+              ],
             },
             {
               heading: "About",
-              links: ["Our Story", "Sustainability", "Journal", "Careers"],
+              links: [
+                { label: "Our Story", href: "/#about" },
+                { label: "Sustainability", href: "/#about" },
+                { label: "Reviews", href: "/#reviews" },
+                { label: "Contact", href: "/contact" },
+              ],
             },
             {
               heading: "Help",
-              links: ["Contact", "Shipping", "Returns", "Plant Care", "FAQ"],
+              links: [
+                { label: "Contact", href: "/contact" },
+                { label: "Shipping", href: "/contact" },
+                { label: "Returns", href: "/contact" },
+                { label: "Plant Care", href: "/contact" },
+                { label: "FAQ", href: "/contact" },
+              ],
             },
             {
               heading: "Connect",
-              links: ["Instagram", "Pinterest", "Facebook", "TikTok"],
+              links: [
+                { label: "Instagram", href: "https://instagram.com" },
+                { label: "Pinterest", href: "https://pinterest.com" },
+                { label: "Facebook", href: "https://facebook.com" },
+                { label: "TikTok", href: "https://tiktok.com" },
+              ],
             },
           ].map(({ heading, links }) => (
             <div key={heading}>
@@ -80,13 +107,13 @@ export default function Footer() {
                 {heading}
               </h4>
               <ul className="space-y-2.5">
-                {links.map((l) => (
-                  <li key={l}>
+                {links.map(({ label, href }) => (
+                  <li key={label}>
                     <Link
-                      href="#"
+                      href={href}
                       className="text-[13px] text-cream-deep hover:text-sage-light transition-colors duration-300 hover:translate-x-1 inline-block"
                     >
-                      {l}
+                      {label}
                     </Link>
                   </li>
                 ))}

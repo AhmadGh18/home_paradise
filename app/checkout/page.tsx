@@ -17,6 +17,7 @@ export default function CheckoutPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderId, setOrderId] = useState("");
   const [orderError, setOrderError] = useState("");
 
   // Redirect if no items in cart
@@ -66,21 +67,25 @@ export default function CheckoutPage() {
           customerEmail: form.email,
           customerPhone: form.phone,
           address: form.address,
+          // Prices and totals are resolved server-side from the database; we
+          // only send which product and how many.
           items: state.items.map((i) => ({
             productId: i.product.id,
-            productName: i.product.name,
-            price: i.product.price,
             quantity: i.quantity,
           })),
-          total: totalPrice,
         }),
       });
 
+      const data = await res.json().catch(() => null);
+
       if (res.ok) {
+        setOrderId(data?.id ?? "");
         clearCart();
         setOrderPlaced(true);
       } else {
-        setOrderError("Failed to place order. Please try again.");
+        setOrderError(
+          data?.error || "Failed to place order. Please try again.",
+        );
       }
     } catch {
       setOrderError("An error occurred. Please try again.");
@@ -111,8 +116,16 @@ export default function CheckoutPage() {
             <p className="text-ink-soft text-lg mb-2">
               Thank you for your purchase.
             </p>
+            {orderId && (
+              <p className="text-ink-soft mb-2">
+                Your order number is{" "}
+                <span className="font-mono font-semibold text-ink">
+                  {orderId}
+                </span>
+              </p>
+            )}
             <p className="text-ink-soft mb-10">
-              We'll send tracking details to your email and phone shortly.
+              We&apos;ll send tracking details to your email and phone shortly.
             </p>
             <Link
               href="/"

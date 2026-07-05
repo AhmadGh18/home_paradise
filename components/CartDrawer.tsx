@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, PLACEHOLDER_IMAGE } from "@/lib/utils";
 
 export default function CartDrawer() {
   const router = useRouter();
@@ -22,6 +23,21 @@ export default function CartDrawer() {
     close();
     router.push("/checkout");
   };
+
+  // Lock background scroll and close on Escape while the drawer is open.
+  useEffect(() => {
+    if (!state.isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") dispatch({ type: "CLOSE" });
+    };
+    document.addEventListener("keydown", onKeyDown);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [state.isOpen, dispatch]);
 
   if (!state.isOpen) return null;
 
@@ -88,7 +104,7 @@ export default function CartDrawer() {
                 >
                   <div className="w-14 h-14 rounded-lg overflow-hidden relative flex-shrink-0 bg-cream border border-beige/50">
                     <Image
-                      src={item.product.image}
+                      src={item.product.image || PLACEHOLDER_IMAGE}
                       alt={item.product.name}
                       fill
                       className="object-cover"
@@ -119,7 +135,8 @@ export default function CartDrawer() {
                         onClick={() =>
                           updateQuantity(item.product.id, item.quantity + 1)
                         }
-                        className="w-8 h-8 rounded border border-beige flex items-center justify-center text-ink-soft hover:bg-cream hover:border-sage-light transition-colors text-sm font-bold"
+                        disabled={item.quantity >= item.product.stock}
+                        className="w-8 h-8 rounded border border-beige flex items-center justify-center text-ink-soft hover:bg-cream hover:border-sage-light transition-colors text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                         aria-label="Increase"
                       >
                         +

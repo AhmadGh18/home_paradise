@@ -1,5 +1,15 @@
+import { unstable_cache } from "next/cache";
 import { sql } from "../db";
 import type { Product } from "../types";
+
+/**
+ * Tag applied to every cached product read. Any route that mutates products
+ * (or product stock) calls `revalidateTag(PRODUCTS_TAG)` so the storefront
+ * picks up the change instead of serving a stale cache. Reads are cached
+ * because the Neon database is remote (~0.5–2s per uncached query).
+ */
+export const PRODUCTS_TAG = "products";
+const CACHE_TTL_SECONDS = 3600;
 
 interface ProductRow {
   id: string;
@@ -37,7 +47,7 @@ function toProduct(row: ProductRow): Product {
   };
 }
 
-export async function listProducts(filters?: {
+async function selectProducts(filters?: {
   categoryId?: string;
   featured?: boolean;
 }): Promise<Product[]> {
@@ -79,13 +89,43 @@ export async function listProducts(filters?: {
   return (result.rows as ProductRow[]).map(toProduct);
 }
 
-export async function findProductById(id: string): Promise<Product | undefined> {
+/** Cached product listing. Invalidated via `revalidateTag(PRODUCTS_TAG)`. */
+export const listProducts = unstable_cache(selectProducts, ["list-products"], {
+  tags: [PRODUCTS_TAG],
+  revalidate: CACHE_TTL_SECONDS,
+});
+
+async function selectProductById(id: string): Promise<Product | undefined> {
   const { rows } = await sql`
     SELECT id, name, slug, description, details, price, "originalPrice", image,
            "categoryId", "categoryName", badge, stock, featured, "createdAt"
     FROM products WHERE id = ${id}
   `;
   return rows[0] ? toProduct(rows[0] as ProductRow) : undefined;
+}
+
+/** Cached single-product read for storefront pages. */
+export const findProductById = unstable_cache(
+  selectProductById,
+  ["product-by-id"],
+  { tags: [PRODUCTS_TAG], revalidate: CACHE_TTL_SECONDS },
+);
+
+/**
+ * Uncached single-product read. Use for correctness-critical paths (checkout
+ * stock checks, admin edits) where a stale snapshot must not be trusted.
+ */
+export function findProductByIdFresh(
+  id: string,
+): Promise<Product | undefined> {
+  return selectProductById(id);
+}
+
+export async function findProductsByIds(ids: string[]): Promise<Product[]> {
+  const unique = [...new Set(ids)].filter(Boolean);
+  if (unique.length === 0) return [];
+  const found = await Promise.all(unique.map((id) => findProductById(id)));
+  return found.filter((p): p is Product => p !== undefined);
 }
 
 export async function createProduct(p: Product): Promise<Product> {
@@ -104,7 +144,7 @@ export async function updateProductById(
   id: string,
   patch: Partial<Product>,
 ): Promise<Product | undefined> {
-  const existing = await findProductById(id);
+  const existing = await selectProductById(id);
   if (!existing) return undefined;
   const next: Product = { ...existing, ...patch };
 

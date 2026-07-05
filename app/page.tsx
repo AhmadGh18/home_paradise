@@ -3,44 +3,11 @@ import Link from "next/link";
 import StoreLayout from "@/components/StoreLayout";
 import ProductCard from "@/components/ProductCard";
 import { listProducts } from "@/lib/repo/products";
+import { listCategories } from "@/lib/repo/categories";
+import { PLACEHOLDER_IMAGE } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-
-const categories = [
-  {
-    id: "cat-1",
-    name: "Flowers",
-    slug: "flowers",
-    image:
-      "https://images.unsplash.com/photo-1587653263995-422546a7a569?auto=format&fit=crop&w=900&q=80",
-    sub: "Shop bouquets",
-  },
-  {
-    id: "cat-2",
-    name: "Plants",
-    slug: "plants",
-    image:
-      "https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?auto=format&fit=crop&w=900&q=80",
-    sub: "Indoor & outdoor",
-  },
-  {
-    id: "cat-3",
-    name: "Soaps",
-    slug: "soaps",
-    image:
-      "https://images.unsplash.com/photo-1600857544200-b2f666a9a2ec?auto=format&fit=crop&w=900&q=80",
-    sub: "Handcrafted",
-  },
-  {
-    id: "cat-4",
-    name: "Gifts",
-    slug: "gifts",
-    image:
-      "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=900&q=80",
-    sub: "Curated sets",
-  },
-];
 
 const testimonials = [
   {
@@ -70,7 +37,10 @@ const testimonials = [
 ];
 
 export default async function HomePage() {
-  const featured = await listProducts({ featured: true });
+  const [featured, categories] = await Promise.all([
+    listProducts({ featured: true }),
+    listCategories(),
+  ]);
 
   return (
     <StoreLayout>
@@ -144,7 +114,7 @@ export default async function HomePage() {
                 className="relative rounded-2xl overflow-hidden aspect-[3/4] cursor-pointer shadow-[0_8px_32px_rgba(46,52,45,0.1)] hover:-translate-y-3 hover:shadow-[0_16px_48px_rgba(46,52,45,0.16)] transition-all duration-300 group border border-white/50"
               >
                 <Image
-                  src={cat.image}
+                  src={cat.image || PLACEHOLDER_IMAGE}
                   alt={cat.name}
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-[1.1]"
@@ -156,7 +126,7 @@ export default async function HomePage() {
                     {cat.name}
                   </h3>
                   <span className="text-[13px] opacity-90 flex items-center gap-2 group-hover:gap-3 transition-all duration-300 font-medium">
-                    {cat.sub}
+                    {cat.description}
                     <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
                       <path d="M5 12h14M13 5l7 7-7 7" />
                     </svg>
@@ -258,7 +228,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── Testimonials ── */}
-      <section className="py-32 bg-cream">
+      <section className="py-32 bg-cream" id="reviews">
         <div className="max-w-[1240px] mx-auto px-6">
           <div className="text-center mb-16">
             <span className="section-header">Reviews</span>

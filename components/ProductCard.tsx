@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, PLACEHOLDER_IMAGE } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 
 interface Props {
@@ -61,11 +61,7 @@ export default function ProductCard({ product }: Props) {
         </button>
         <Link href={`/products/${product.id}`} className="relative block w-full h-full">
           <Image
-            src={
-              product.image
-                ? product.image
-                : "https://www.shutterstock.com/search/color-image"
-            }
+            src={product.image || PLACEHOLDER_IMAGE}
             alt={product.name}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -85,22 +81,6 @@ export default function ProductCard({ product }: Props) {
         <p className="text-[13px] text-ink-soft leading-relaxed line-clamp-2 min-h-[32px]">
           {product.description}
         </p>
-
-        {/* Rating */}
-        <div className="flex items-center gap-2 pt-1">
-          <div className="flex gap-0.5">
-            {[...Array(5)].map((_, i) => (
-              <svg
-                key={i}
-                viewBox="0 0 24 24"
-                className={`w-3.5 h-3.5 ${i < 4 ? "fill-terracotta" : "fill-beige"}`}
-              >
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
-            ))}
-          </div>
-          <span className="text-[12px] text-ink-soft font-medium">(24)</span>
-        </div>
 
         {/* Stock Status */}
         <div className={`text-[12px] font-medium ${stockColor}`}>

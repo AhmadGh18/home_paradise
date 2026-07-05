@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -6,12 +7,28 @@ import ProductCard from "@/components/ProductCard";
 import AddToCartButton from "./AddToCartButton";
 import { findProductById, listProducts } from "@/lib/repo/products";
 import type { Product } from "@/lib/types";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, PLACEHOLDER_IMAGE } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const product = await findProductById(id);
+  if (!product) return { title: "Product not found — HomeParadise" };
+
+  const title = `${product.name} — HomeParadise`;
+  const description = product.description || "Bring nature home with HomeParadise.";
+  const images = product.image ? [{ url: product.image }] : undefined;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, images, type: "website" },
+  };
 }
 
 export default async function ProductPage({ params }: Props) {
@@ -20,12 +37,8 @@ export default async function ProductPage({ params }: Props) {
 
   if (!product) notFound();
 
-  const allProducts = await listProducts();
-  const related = allProducts
-    .filter(
-      (p: Product) =>
-        p.categoryId === product?.categoryId && p.id !== product.id,
-    )
+  const related = (await listProducts({ categoryId: product.categoryId }))
+    .filter((p: Product) => p.id !== product.id)
     .slice(0, 4);
 
   return (
@@ -51,7 +64,7 @@ export default async function ProductPage({ params }: Props) {
               </span>
             )}
             <Image
-              src={product.image}
+              src={product.image || PLACEHOLDER_IMAGE}
               alt={product.name}
               fill
               priority
