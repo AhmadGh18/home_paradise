@@ -77,7 +77,7 @@ export async function PUT(request: NextRequest, { params }: Context) {
 
   try {
     const updated = await updateProductById(id, patch);
-    if (updated) revalidateTag(PRODUCTS_TAG);
+    if (updated) revalidateTag(PRODUCTS_TAG, "max");
     return updated ? ok(updated) : notFound();
   } catch {
     return serverError("Failed to update product");
@@ -90,6 +90,6 @@ export async function DELETE(request: NextRequest, { params }: Context) {
 
   const { id } = await params;
   const deleted = await deleteProductById(id);
-  if (deleted) revalidateTag(PRODUCTS_TAG);
+  if (deleted) revalidateTag(PRODUCTS_TAG, "max");
   return deleted ? ok({ success: true }) : notFound();
 }

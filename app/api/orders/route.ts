@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
 
   try {
     await createOrderWithInventory(order);
-    revalidateTag(PRODUCTS_TAG); // stock changed — refresh storefront caches
+    revalidateTag(PRODUCTS_TAG, "max"); // stock changed — refresh storefront caches
     return created(order);
   } catch (err) {
     if (err instanceof OutOfStockError) {

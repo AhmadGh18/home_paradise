@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
   try {
     await createProduct(product);
-    revalidateTag(PRODUCTS_TAG);
+    revalidateTag(PRODUCTS_TAG, "max");
     return created(product);
   } catch {
     return serverError("Failed to create product");
