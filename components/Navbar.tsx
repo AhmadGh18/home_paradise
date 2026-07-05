@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
-
+import image from "../public/logo1size.png"
+import Image from "next/image";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/shop", label: "Shop" },
@@ -42,13 +43,7 @@ export default function Navbar() {
           className="font-serif text-[26px] font-semibold text-sage-dark flex items-center gap-2.5 leading-none hover:opacity-80 transition-opacity"
           aria-label="HomeParadise home"
         >
-          <svg
-            viewBox="0 0 24 24"
-            className="w-6 h-6 fill-sage-dark"
-            aria-hidden="true"
-          >
-            <path d="M12 2C7 6 4 10 4 15a8 8 0 0 0 16 0c0-5-3-9-8-13zm0 4c3 3 6 6 6 10a6 6 0 0 1-12 0c0-4 3-7 6-10z" />
-          </svg>
+          <Image height={82}  className="object-contain" src={image} alt="logo" />
           <span className="hidden sm:inline">HomeParadise</span>
         </Link>
 
@@ -59,11 +54,10 @@ export default function Navbar() {
               <li key={href}>
                 <Link
                   href={href}
-                  className={`text-sm font-medium relative pb-1.5 transition-colors duration-300 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-sage-dark after:transition-all after:duration-300 ${
-                    pathname === href
+                  className={`text-sm font-medium relative pb-1.5 transition-colors duration-300 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-sage-dark after:transition-all after:duration-300 ${pathname === href
                       ? "text-sage-dark after:w-full"
                       : "text-ink-soft hover:text-sage-dark after:w-0 hover:after:w-full"
-                  }`}
+                    }`}
                 >
                   {label}
                 </Link>
@@ -128,11 +122,10 @@ export default function Navbar() {
                 <Link
                   href={href}
                   onClick={() => setMobileOpen(false)}
-                  className={`block py-3 px-2 text-[15px] font-medium rounded-lg transition-colors ${
-                    pathname === href
+                  className={`block py-3 px-2 text-[15px] font-medium rounded-lg transition-colors ${pathname === href
                       ? "text-sage-dark bg-sage-light/20"
                       : "text-ink hover:bg-sage-light/10 hover:text-sage-dark"
-                  }`}
+                    }`}
                 >
                   {label}
                 </Link>
