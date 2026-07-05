@@ -2,9 +2,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { sessionCookie, verifySession, type SessionPayload } from "./session";
 
 function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  // Compare over the longer length so we never early-return on a length
+  // mismatch (which would leak the secret's length via timing). A length
+  // difference still forces the result to false via the `matched` flag.
+  const len = Math.max(a.length, b.length);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < len; i++) {
+    diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  }
   return diff === 0;
 }
 

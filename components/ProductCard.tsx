@@ -46,7 +46,7 @@ export default function ProductCard({ product }: Props) {
         )}
         <button
           onClick={() => setWishlisted((w) => !w)}
-          className="absolute top-3.5 right-3.5 z-10 w-10 h-10 rounded-full bg-white flex items-center justify-center opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-300 shadow-md hover:shadow-lg"
+          className="absolute top-3.5 right-3.5 z-10 w-10 h-10 rounded-full bg-white flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:scale-75 sm:group-hover:scale-100 transition-all duration-300 shadow-md hover:shadow-lg"
           aria-label="Add to wishlist"
         >
           <svg

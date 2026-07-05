@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 interface AuthState {
   username: string | null;
@@ -21,6 +21,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -34,9 +35,15 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         const res = await fetch("/api/auth/me");
-        if (!cancelled && res.ok) {
+        if (cancelled) return;
+        if (res.ok) {
           const data = await res.json();
           setUsername(data.user?.username ?? null);
+        } else if (res.status === 401 && pathname !== "/admin/login") {
+          // Session expired or missing — bounce to login (the proxy guards
+          // full page loads, this covers client-side session loss too).
+          setUsername(null);
+          router.replace("/admin/login");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -45,7 +52,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [pathname, router]);
 
   return (
     <AuthContext.Provider value={{ username, loading, logout }}>

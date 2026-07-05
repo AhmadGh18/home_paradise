@@ -141,8 +141,8 @@ export default function AdminProductsPage() {
   );
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 pt-12 lg:pt-0">
         <div>
           <h1 className="font-serif text-3xl text-ink">Products</h1>
           <p className="text-ink-soft text-sm mt-1">
@@ -266,13 +266,13 @@ export default function AdminProductsPage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => openEdit(product)}
-                          className="text-ink-soft hover:text-sage-dark transition-colors text-xs border border-gray-200 px-3 py-1.5 rounded-full hover:border-sage-dark"
+                          className="text-ink-soft hover:text-sage-dark transition-colors text-xs border border-gray-200 px-3 py-2 sm:py-1.5 rounded-full hover:border-sage-dark min-h-[36px]"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => setDeleteId(product.id)}
-                          className="text-ink-soft hover:text-red-500 transition-colors text-xs border border-gray-200 px-3 py-1.5 rounded-full hover:border-red-300"
+                          className="text-ink-soft hover:text-red-500 transition-colors text-xs border border-gray-200 px-3 py-2 sm:py-1.5 rounded-full hover:border-red-300 min-h-[36px]"
                         >
                           Delete
                         </button>
@@ -318,7 +318,7 @@ export default function AdminProductsPage() {
       {modalMode && (
         <div className="fixed inset-0 bg-ink/40 z-50 flex items-start justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl w-full max-w-2xl my-8 shadow-xl">
-            <div className="flex items-center justify-between px-7 py-5 border-b border-gray-100">
+            <div className="flex items-center justify-between px-5 sm:px-7 py-5 border-b border-gray-100">
               <h3 className="font-serif text-xl text-ink">
                 {modalMode === "create" ? "Add Product" : "Edit Product"}
               </h3>
@@ -336,8 +336,8 @@ export default function AdminProductsPage() {
                 </svg>
               </button>
             </div>
-            <form onSubmit={handleSave} className="px-7 py-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSave} className="px-5 sm:px-7 py-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Name *" required>
                   <input
                     required
@@ -388,7 +388,7 @@ export default function AdminProductsPage() {
                   className={inputCls + " resize-none"}
                 />
               </Field>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Field label="Price *" required>
                   <input
                     required
@@ -430,7 +430,7 @@ export default function AdminProductsPage() {
                   />
                 </Field>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Category *" required>
                   <select
                     required
@@ -460,7 +460,7 @@ export default function AdminProductsPage() {
                 </Field>
               </div>
               <Field label="Image" required>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col gap-3">
                   <input
                     type="file"
                     accept="image/*"
@@ -472,7 +472,7 @@ export default function AdminProductsPage() {
                     }}
                     className="text-sm"
                   />
-                  <div className="flex-1">
+                  <div>
                     <input
                       type="url"
                       value={form.image}

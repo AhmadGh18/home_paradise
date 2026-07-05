@@ -107,19 +107,19 @@ export default function CartDrawer() {
                         onClick={() =>
                           updateQuantity(item.product.id, item.quantity - 1)
                         }
-                        className="w-6 h-6 rounded border border-beige flex items-center justify-center text-ink-soft hover:bg-cream hover:border-sage-light transition-colors text-xs font-bold"
+                        className="w-8 h-8 rounded border border-beige flex items-center justify-center text-ink-soft hover:bg-cream hover:border-sage-light transition-colors text-sm font-bold"
                         aria-label="Decrease"
                       >
                         −
                       </button>
-                      <span className="text-[12px] font-semibold w-3 text-center text-ink">
+                      <span className="text-[13px] font-semibold w-5 text-center text-ink">
                         {item.quantity}
                       </span>
                       <button
                         onClick={() =>
                           updateQuantity(item.product.id, item.quantity + 1)
                         }
-                        className="w-6 h-6 rounded border border-beige flex items-center justify-center text-ink-soft hover:bg-cream hover:border-sage-light transition-colors text-xs font-bold"
+                        className="w-8 h-8 rounded border border-beige flex items-center justify-center text-ink-soft hover:bg-cream hover:border-sage-light transition-colors text-sm font-bold"
                         aria-label="Increase"
                       >
                         +

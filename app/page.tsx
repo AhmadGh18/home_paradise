@@ -124,7 +124,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── Categories ── */}
-      <section className="py-32 bg-cream" id="shop">
+      <section className="py-16 md:py-32 bg-cream" id="shop">
         <div className="max-w-[1240px] mx-auto px-6">
           <div className="text-center mb-16">
             <span className="section-header">Shop</span>
@@ -169,7 +169,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── Featured Products ── */}
-      <section className="py-32 bg-white">
+      <section className="py-16 md:py-32 bg-white">
         <div className="max-w-[1240px] mx-auto px-6">
           <div className="text-center mb-16">
             <span className="section-header">Bestsellers</span>

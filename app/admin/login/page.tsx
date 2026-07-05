@@ -1,15 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 export default function AdminLoginPage() {
+  return (
+    <Suspense>
+      <AdminLoginForm />
+    </Suspense>
+  );
+}
+
+function AdminLoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,10 +34,13 @@ export default function AdminLoginPage() {
 
       const data = await res.json();
 
-      if (data.success) {
-        router.push("/admin");
+      if (res.ok && data.success) {
+        const next = searchParams.get("next");
+        const target = next && next.startsWith("/admin") ? next : "/admin";
+        router.replace(target);
+        router.refresh();
       } else {
-        setError(data.message || "Invalid credentials");
+        setError(data.error || "Invalid credentials");
       }
     } catch {
       setError("An error occurred. Please try again.");
