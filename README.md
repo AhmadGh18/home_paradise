@@ -75,12 +75,14 @@ proxy.ts                  Server-side guard for /admin/*
   admin endpoint calls `requireAdmin()`, which returns `401` without a valid session.
 - Wrap every API handler in `route()` from `lib/api.ts`. It rejects cross-origin writes
   and stops internal errors from reaching clients.
-- Session cookies are signed with `SESSION_SECRET`, expire after 24 hours, and are
-  `httpOnly` + `sameSite=lax`. They are stateless: logging out clears the cookie in that
-  browser, and changing `SESSION_SECRET` is how to end every session at once.
-- Login allows 5 attempts and orders allow 10, per client per 15 minutes. Limits rely
-  on `x-forwarded-for`, which Vercel sets. If you self-host, your reverse proxy must
-  overwrite that header, or clients can bypass the limits.
+- Session cookies are signed with `SESSION_SECRET` and the admin login details, expire
+  after 12 hours, and are `httpOnly` + `sameSite=strict`. They are stateless: logging out
+  clears the cookie in that browser, and changing the admin password or `SESSION_SECRET`
+  ends every session at once.
+- Login allows 5 attempts per client and 100 in total, and orders allow 10 per client,
+  all per 15 minutes. Per-client limits rely on `x-forwarded-for`, which Vercel sets. If
+  you self-host, your reverse proxy must overwrite that header, or clients can bypass
+  those limits. The total login limit still applies.
 
 ## Orders and stock
 

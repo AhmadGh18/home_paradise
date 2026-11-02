@@ -1,5 +1,5 @@
 const SESSION_COOKIE = "admin_session";
-const DEFAULT_TTL_SECONDS = 60 * 60 * 24; // 24h
+const DEFAULT_TTL_SECONDS = 60 * 60 * 12; // 12h
 
 function base64UrlEncode(bytes: Uint8Array): string {
   let bin = "";
@@ -28,7 +28,10 @@ function getSecret(): string {
 async function hmacKey(): Promise<CryptoKey> {
   return crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(getSecret()),
+    // Including the login details means changing them ends every open session.
+    new TextEncoder().encode(
+      `${getSecret()}:${process.env.ADMIN_USERNAME}:${process.env.ADMIN_PASSWORD}`,
+    ),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign", "verify"],
@@ -100,7 +103,7 @@ export const sessionCookie = {
   options: {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
+    sameSite: "strict" as const,
     path: "/",
     maxAge: DEFAULT_TTL_SECONDS,
   },

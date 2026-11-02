@@ -47,10 +47,10 @@ export default function Navbar() {
                 <Link
                   href={href}
                   aria-current={pathname === href ? "page" : undefined}
-                  className={`text-[15px] transition-colors duration-200 hover:text-ink ${
+                  className={`relative py-1 text-[15px] transition-colors duration-200 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-left after:bg-terracotta after:transition-[scale] after:duration-200 hover:text-ink hover:after:scale-x-100 ${
                     pathname === href
-                      ? "text-ink underline decoration-terracotta decoration-2 underline-offset-[6px]"
-                      : "text-ink-soft"
+                      ? "text-ink after:scale-x-100"
+                      : "text-ink-soft after:scale-x-0"
                   }`}
                 >
                   {label}
@@ -68,10 +68,12 @@ export default function Navbar() {
             aria-label={`Open cart, ${totalItems} ${totalItems === 1 ? "item" : "items"}`}
           >
             <span className="max-[359px]:hidden">Cart</span>
+            {/* The key restarts the little bump whenever the count changes. */}
             <span
+              key={totalItems}
               className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-[12px] font-medium tabular-nums ${
                 totalItems > 0
-                  ? "bg-sage-dark text-cream"
+                  ? "bump bg-sage-dark text-cream"
                   : "bg-cream-deep text-ink-soft"
               }`}
             >

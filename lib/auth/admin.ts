@@ -15,6 +15,9 @@ export function verifyCredentials(username: string, password: string): boolean {
     console.error("ADMIN_USERNAME and ADMIN_PASSWORD must be set to log in.");
     return false;
   }
+  if (process.env.NODE_ENV === "production" && p.length < 12) {
+    console.warn("ADMIN_PASSWORD is short. Use at least 12 characters.");
+  }
   // Compare both every time: stopping early would reveal a valid username.
   const usernameMatches = safeEqual(username, u);
   const passwordMatches = safeEqual(password, p);

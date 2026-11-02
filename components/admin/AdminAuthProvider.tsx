@@ -31,6 +31,8 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    // Nobody is signed in here yet, so there's no session to look up.
+    if (pathname === "/admin/login") return;
     let cancelled = false;
     (async () => {
       try {
@@ -39,7 +41,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         if (res.ok) {
           const data = await res.json();
           setUsername(data.user?.username ?? null);
-        } else if (res.status === 401 && pathname !== "/admin/login") {
+        } else if (res.status === 401) {
           // Session expired or missing — bounce to login (the proxy guards
           // full page loads, this covers client-side session loss too).
           setUsername(null);

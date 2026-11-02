@@ -23,7 +23,8 @@ function clientIp(request: Request): string {
 }
 
 /** Addresses are hashed so the table doesn't accumulate personal data. */
-function bucketKey(scope: string, request: Request): string {
+function bucketKey(scope: string, request: Request, shared?: boolean): string {
+  if (shared) return `${scope}:all`;
   const hash = createHash("sha256").update(clientIp(request)).digest("hex");
   return `${scope}:${hash}`;
 }
@@ -32,6 +33,8 @@ interface Limit {
   scope: string;
   max: number;
   windowSeconds: number;
+  /** One counter for everyone, which a changing or faked address can't dodge. */
+  shared?: boolean;
 }
 
 /**
@@ -40,10 +43,10 @@ interface Limit {
  */
 export async function enforceRateLimit(
   request: Request,
-  { scope, max, windowSeconds }: Limit,
+  { scope, max, windowSeconds, shared }: Limit,
 ): Promise<void> {
   await ensureTable();
-  const key = bucketKey(scope, request);
+  const key = bucketKey(scope, request, shared);
 
   const { rows } = await sql`
     INSERT INTO rate_limits (key, count, reset_at)
@@ -68,7 +71,7 @@ export async function enforceRateLimit(
 
 export async function resetRateLimit(
   request: Request,
-  scope: string,
+  { scope, shared }: Pick<Limit, "scope" | "shared">,
 ): Promise<void> {
-  await sql`DELETE FROM rate_limits WHERE key = ${bucketKey(scope, request)}`;
+  await sql`DELETE FROM rate_limits WHERE key = ${bucketKey(scope, request, shared)}`;
 }

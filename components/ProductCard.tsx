@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import FadeImage from "@/components/FadeImage";
 import LinkPendingBar from "@/components/LinkPendingBar";
 import { useCart } from "@/context/CartContext";
 import { formatPrice, PLACEHOLDER_IMAGE } from "@/lib/utils";
@@ -24,19 +24,19 @@ export default function ProductCard({ product }: Props) {
   };
 
   return (
-    <article className="group">
+    <article className="reveal group">
       <div className="relative aspect-[4/5] overflow-hidden bg-cream-deep">
         <Link
           href={`/products/${product.id}`}
           className="absolute inset-0"
           aria-label={product.name}
         >
-          <Image
+          <FadeImage
             src={product.image || PLACEHOLDER_IMAGE}
             alt=""
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className={`object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] ${soldOut ? "opacity-60 grayscale-[35%]" : ""}`}
+            className={`object-cover transition-[opacity,scale] duration-700 ease-out group-hover:scale-[1.04] ${soldOut ? "opacity-60 grayscale-[35%]" : ""}`}
           />
           <LinkPendingBar />
         </Link>
@@ -64,7 +64,7 @@ export default function ProductCard({ product }: Props) {
             <button
               onClick={handleAdd}
               aria-label={`Add ${product.name} to cart`}
-              className={`absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full transition-colors duration-200 lg:hidden ${
+              className={`absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full transition-[background-color,scale] duration-150 active:scale-90 lg:hidden ${
                 added ? "bg-terracotta text-cream" : "bg-sage-dark text-cream"
               }`}
             >

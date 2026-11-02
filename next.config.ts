@@ -20,6 +20,12 @@ const nextConfig: NextConfig = {
         headers: [
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'DENY' },
+          // A baseline only. Limiting scripts as well would need per-request nonces.
+          {
+            key: 'Content-Security-Policy',
+            value:
+              "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self' mailto:",
+          },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           {
             key: 'Strict-Transport-Security',
@@ -30,6 +36,11 @@ const nextConfig: NextConfig = {
             value: 'camera=(), microphone=(), geolocation=()',
           },
         ],
+      },
+      // Keep the admin panel out of search results.
+      {
+        source: '/admin/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
       },
       // Customer data and session state must never land in a shared cache.
       {

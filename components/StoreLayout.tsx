@@ -7,7 +7,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
     <>
       <Navbar />
       <CartDrawer />
-      <main>{children}</main>
+      <main className="page-in">{children}</main>
       <Footer />
     </>
   );
