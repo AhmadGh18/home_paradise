@@ -4,29 +4,21 @@ import StoreLayout from "@/components/StoreLayout";
 export default function NotFound() {
   return (
     <StoreLayout>
-      <div className="min-h-[70vh] flex items-center justify-center bg-cream px-6">
-        <div className="text-center max-w-md">
-          <p className="font-serif text-[80px] leading-none text-sage-dark mb-2">
-            404
-          </p>
-          <h1 className="font-serif text-3xl text-ink mb-3">Page not found</h1>
-          <p className="text-ink-soft mb-8">
-            The page you&apos;re looking for doesn&apos;t exist or has moved.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 bg-sage-dark text-white px-8 py-3 rounded-full font-semibold hover:bg-ink transition-colors"
-            >
-              Back home
-            </Link>
-            <Link
-              href="/shop"
-              className="inline-flex items-center gap-2 border-2 border-ink/20 text-ink px-8 py-3 rounded-full font-semibold hover:bg-cream-deep transition-colors"
-            >
-              Browse shop
-            </Link>
-          </div>
+      <div className="page-width flex min-h-[70vh] flex-col justify-center py-20">
+        <p className="eyebrow mb-5">Page not found</p>
+        <h1 className="max-w-[14ch] font-serif text-[clamp(48px,8vw,104px)] leading-[0.98] tracking-[-0.03em] text-ink">
+          This path <em className="text-sage">leads nowhere.</em>
+        </h1>
+        <p className="mt-6 text-[18px] text-ink-soft">
+          The page you&apos;re looking for doesn&apos;t exist or has moved.
+        </p>
+        <div className="mt-9 flex flex-wrap gap-3">
+          <Link href="/shop" className="btn-primary">
+            Browse the shop
+          </Link>
+          <Link href="/" className="btn-secondary">
+            Back home
+          </Link>
         </div>
       </div>
     </StoreLayout>

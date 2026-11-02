@@ -23,16 +23,37 @@ const statusColor: Record<string, string> = {
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
 
   const load = async () => {
     setLoading(true);
-    const res = await fetch("/api/orders");
-    const data = await res.json();
-    setOrders(data);
-    setLoading(false);
+    setError(null);
+    try {
+      const res = await fetch("/api/orders");
+      const data = await res.json();
+      if (!res.ok) {
+        console.error("Failed to load orders:", data);
+        setError(data?.error || "Failed to load orders");
+        setOrders([]);
+        return;
+      }
+      if (!Array.isArray(data)) {
+        console.error("Unexpected orders response:", data);
+        setError("Unexpected response from server");
+        setOrders([]);
+        return;
+      }
+      setOrders(data);
+    } catch (e) {
+      console.error("Error loading orders", e);
+      setError("Network error while loading orders");
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -41,12 +62,23 @@ export default function AdminOrdersPage() {
 
   const updateStatus = async (id: string, status: OrderStatus) => {
     setUpdating(id);
-    await fetch(`/api/orders/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
+    let updateError: string | null = null;
+    try {
+      const res = await fetch(`/api/orders/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        updateError = data?.error || "Failed to update order";
+      }
+    } catch {
+      updateError = "Network error while updating order";
+    }
     await load();
+    // load() clears the error, so show the update's result after it finishes.
+    if (updateError) setError(updateError);
     setUpdating(null);
   };
 
@@ -81,6 +113,8 @@ export default function AdminOrdersPage() {
           </button>
         ))}
       </div>
+
+      {error && <div className="text-red-600 text-sm mb-4">{error}</div>}
 
       {loading ? (
         <div className="text-center py-12 lg:py-20 text-ink-soft">Loading…</div>

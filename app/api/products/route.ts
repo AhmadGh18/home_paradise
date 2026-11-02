@@ -1,90 +1,69 @@
-import { type NextRequest } from "next/server";
 import {
-  badRequest,
   created,
   generateId,
+  HttpError,
+  isUniqueViolation,
   ok,
   parseRequestBody,
-  serverError,
+  route,
 } from "@/lib/api";
-import { revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth/admin";
 import { findCategoryById } from "@/lib/repo/categories";
 import {
   createProduct,
   findProductsByIds,
+  invalidateProducts,
   listProducts,
-  PRODUCTS_TAG,
 } from "@/lib/repo/products";
-import type { Product } from "@/lib/types";
+import { isValidId, parseNewProduct } from "@/lib/validation";
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
+const MAX_IDS_PER_REQUEST = 100;
+
+export const GET = route(async (request) => {
+  const { searchParams } = request.nextUrl;
 
   // `?ids=a,b,c` — used by the cart to refresh its stored product snapshots.
   const idsParam = searchParams.get("ids");
   if (idsParam !== null) {
-    const ids = idsParam.split(",").map((s) => s.trim()).filter(Boolean);
+    const ids = idsParam.split(",").map((s) => s.trim()).filter(isValidId);
+    if (ids.length > MAX_IDS_PER_REQUEST) {
+      throw new HttpError(400, "Too many product ids");
+    }
     return ok(await findProductsByIds(ids));
   }
 
   const categoryId = searchParams.get("categoryId") ?? undefined;
+  if (categoryId !== undefined && !isValidId(categoryId)) return ok([]);
+
   const featuredParam = searchParams.get("featured");
   const featured =
     featuredParam === "true" ? true : featuredParam === "false" ? false : undefined;
 
   return ok(await listProducts({ categoryId, featured }));
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = route(async (request) => {
   const denied = await requireAdmin(request);
   if (denied) return denied;
 
-  let body: Record<string, unknown>;
-  try {
-    body = await parseRequestBody(request);
-  } catch {
-    return badRequest();
-  }
+  const fields = parseNewProduct(await parseRequestBody(request));
 
-  const name = String(body.name ?? "").trim();
-  const slug = String(body.slug ?? "").trim();
-  const description = String(body.description ?? "").trim();
-  const categoryId = String(body.categoryId ?? "").trim();
-  const price = Number(body.price);
-  const stock = Number(body.stock);
-
-  if (!name || !slug || !description || !categoryId) {
-    return badRequest("name, slug, description and categoryId are required");
-  }
-  if (!Number.isFinite(price) || price < 0) return badRequest("Invalid price");
-  if (!Number.isInteger(stock) || stock < 0) return badRequest("Invalid stock");
-
-  const category = await findCategoryById(categoryId);
-  if (!category) return badRequest("Unknown categoryId");
-
-  const product: Product = {
-    id: generateId("prod"),
-    name,
-    slug,
-    description,
-    details: body.details ? String(body.details) : undefined,
-    price,
-    originalPrice: body.originalPrice ? Number(body.originalPrice) : undefined,
-    image: body.image ? String(body.image) : "",
-    categoryId,
-    categoryName: category.name,
-    badge: body.badge ? String(body.badge) : undefined,
-    stock,
-    featured: body.featured === true || body.featured === "true",
-    createdAt: new Date().toISOString(),
-  };
+  const category = await findCategoryById(fields.categoryId);
+  if (!category) throw new HttpError(400, "Unknown category");
 
   try {
-    await createProduct(product);
-    revalidateTag(PRODUCTS_TAG, "max");
+    const product = await createProduct({
+      ...fields,
+      id: generateId("prod"),
+      categoryName: category.name,
+      createdAt: new Date().toISOString(),
+    });
+    invalidateProducts();
     return created(product);
-  } catch {
-    return serverError("Failed to create product");
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      throw new HttpError(409, "A product with this slug already exists");
+    }
+    throw err;
   }
-}
+});

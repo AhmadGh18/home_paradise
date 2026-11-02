@@ -1,7 +1,8 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { route } from "@/lib/api";
 import { getAdminSession } from "@/lib/auth/admin";
 
-export async function GET(request: NextRequest) {
+export const GET = route(async (request) => {
   const session = await getAdminSession(request);
   if (!session) {
     return NextResponse.json({ authenticated: false }, { status: 401 });
@@ -10,4 +11,4 @@ export async function GET(request: NextRequest) {
     authenticated: true,
     user: { username: session.sub },
   });
-}
+});

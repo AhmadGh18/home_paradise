@@ -1,11 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import LinkPendingBar from "@/components/LinkPendingBar";
 import { useCart } from "@/context/CartContext";
-import image from "../public/logo1size.png"
-import Image from "next/image";
+import logo from "../public/logo1.png";
+
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/shop", label: "Shop" },
@@ -16,123 +18,103 @@ export default function Navbar() {
   const pathname = usePathname();
   const { totalItems, dispatch } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   return (
-    <header
-      className="sticky top-0 z-50 bg-cream/95 backdrop-blur-lg border-b border-ink/8 transition-all duration-300"
-      style={{
-        boxShadow: scrolled ? "0 6px 24px rgba(46,52,45,0.08)" : "none",
-      }}
-    >
-      <div className="max-w-[1240px] mx-auto flex items-center justify-between px-6 py-3.5">
-        {/* Logo */}
+    <header className="sticky top-0 z-30 border-b border-beige bg-cream/95 backdrop-blur">
+      <div className="page-width flex h-[72px] items-center justify-between gap-2 sm:gap-6">
         <Link
           href="/"
-          className="font-serif text-[26px] font-semibold text-sage-dark flex items-center gap-2.5 leading-none hover:opacity-80 transition-opacity"
+          className="flex min-w-0 items-center gap-1.5 sm:gap-2.5"
           aria-label="HomeParadise home"
+          onClick={() => setMobileOpen(false)}
         >
           <Image
-            src={image}
-            alt="HomeParadise logo"
+            src={logo}
+            alt=""
             priority
-            className="h-14 w-auto object-contain -my-2"
+            sizes="64px"
+            className="h-12 w-12 shrink-0 object-contain sm:h-16 sm:w-16"
           />
-          <span className="hidden sm:inline">HomeParadise</span>
+          <span className="font-serif text-[20px] tracking-tight text-ink sm:text-[22px]">
+            HomeParadise
+          </span>
         </Link>
 
-        {/* Desktop nav */}
         <nav aria-label="Primary" className="hidden md:block">
-          <ul className="flex gap-10 list-none">
+          <ul className="flex items-center gap-10">
             {navLinks.map(({ href, label }) => (
               <li key={href}>
                 <Link
                   href={href}
-                  className={`text-sm font-medium relative pb-1.5 transition-colors duration-300 after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-sage-dark after:transition-all after:duration-300 ${pathname === href
-                      ? "text-sage-dark after:w-full"
-                      : "text-ink-soft hover:text-sage-dark after:w-0 hover:after:w-full"
-                    }`}
+                  aria-current={pathname === href ? "page" : undefined}
+                  className={`text-[15px] transition-colors duration-200 hover:text-ink ${
+                    pathname === href
+                      ? "text-ink underline decoration-terracotta decoration-2 underline-offset-[6px]"
+                      : "text-ink-soft"
+                  }`}
                 >
                   {label}
+                  <LinkPendingBar />
                 </Link>
               </li>
             ))}
           </ul>
         </nav>
 
-        {/* Actions */}
-        <div className="flex items-center gap-4">
-          {/* Cart */}
+        <div className="flex shrink-0 items-center sm:gap-4">
           <button
             onClick={() => dispatch({ type: "OPEN" })}
-            className="relative w-10 h-10 rounded-full inline-flex items-center justify-center text-ink hover:bg-sage-light/30 hover:text-sage-dark transition-all duration-300 hover:scale-110 active:scale-95"
-            aria-label="Open cart"
+            className="flex h-11 min-w-11 items-center justify-center gap-2 px-1 text-[15px] text-ink transition-colors duration-200 hover:text-terracotta sm:px-2"
+            aria-label={`Open cart, ${totalItems} ${totalItems === 1 ? "item" : "items"}`}
+          >
+            <span className="max-[359px]:hidden">Cart</span>
+            <span
+              className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-[12px] font-medium tabular-nums ${
+                totalItems > 0
+                  ? "bg-sage-dark text-cream"
+                  : "bg-cream-deep text-ink-soft"
+              }`}
+            >
+              {totalItems}
+            </span>
+          </button>
+
+          <button
+            className="-mr-2 flex h-11 w-11 items-center justify-center md:hidden"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen((open) => !open)}
           >
             <svg
               viewBox="0 0 24 24"
-              className="w-5 h-5 stroke-current fill-none stroke-[1.6]"
+              className="h-6 w-6 fill-none stroke-ink"
+              strokeWidth={1.5}
               strokeLinecap="round"
-              strokeLinejoin="round"
+              aria-hidden="true"
             >
-              <circle cx="9" cy="21" r="1" fill="currentColor" />
-              <circle cx="20" cy="21" r="1" fill="currentColor" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+              {mobileOpen ? (
+                <path d="M6 6l12 12M18 6 6 18" />
+              ) : (
+                <path d="M4 8h16M4 16h16" />
+              )}
             </svg>
-            {mounted && totalItems > 0 && (
-              <span className="absolute top-0.5 right-0.5 bg-terracotta text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center leading-none animate-pulse">
-                {totalItems > 9 ? "9+" : totalItems}
-              </span>
-            )}
-          </button>
-
-          {/* Hamburger */}
-          <button
-            className="md:hidden w-10 h-10 rounded-full inline-flex items-center justify-center transition-colors hover:bg-sage-light/30"
-            aria-label="Toggle menu"
-            aria-expanded={mobileOpen}
-            onClick={() => setMobileOpen((o) => !o)}
-          >
-            <span className="flex flex-col gap-1.5">
-              <span
-                className={`block w-5 h-0.5 bg-ink transition-all duration-300 ${mobileOpen ? "translate-y-2.5 rotate-45 bg-sage-dark" : ""}`}
-              />
-              <span
-                className={`block w-5 h-0.5 bg-ink transition-opacity duration-300 ${mobileOpen ? "opacity-0" : ""}`}
-              />
-              <span
-                className={`block w-5 h-0.5 bg-ink transition-all duration-300 ${mobileOpen ? "-translate-y-2.5 -rotate-45 bg-sage-dark" : ""}`}
-              />
-            </span>
           </button>
         </div>
       </div>
 
-      {/* Mobile menu */}
       {mobileOpen && (
-        <nav className="md:hidden border-t border-ink/8 bg-cream/50 backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300">
-          <ul className="list-none space-y-0 max-w-[1240px] mx-auto px-6 py-3">
+        <nav aria-label="Mobile" className="border-t border-beige md:hidden">
+          <ul className="page-width divide-y divide-beige">
             {navLinks.map(({ href, label }) => (
               <li key={href}>
                 <Link
                   href={href}
                   onClick={() => setMobileOpen(false)}
-                  className={`block py-3 px-2 text-[15px] font-medium rounded-lg transition-colors ${pathname === href
-                      ? "text-sage-dark bg-sage-light/20"
-                      : "text-ink hover:bg-sage-light/10 hover:text-sage-dark"
-                    }`}
+                  aria-current={pathname === href ? "page" : undefined}
+                  className="block py-4 font-serif text-[24px] text-ink"
                 >
                   {label}
+                  <LinkPendingBar />
                 </Link>
               </li>
             ))}

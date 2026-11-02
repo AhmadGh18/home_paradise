@@ -1,19 +1,25 @@
 @import "tailwindcss";
 
+/*
+ * Palette sampled from the logo: olive leaves, ochre sun, walnut house, sand
+ * hills. The admin panel uses these same tokens, so keep the names stable.
+ */
 @theme inline {
-  --color-sage: #8aa58a;
-  --color-sage-dark: #5f7a5c;
-  --color-sage-light: #c3d4c0;
-  --color-cream: #f6f1e7;
-  --color-cream-deep: #ede4d1;
-  --color-beige: #e8dcc4;
-  --color-terracotta: #c87a5b;
-  --color-terracotta-soft: #e0a58b;
-  --color-ink: #2e342d;
-  --color-ink-soft: #5b615a;
+  --color-sage: #747a45;
+  --color-sage-dark: #3f4a2b;
+  --color-sage-light: #cdcfa8;
+  --color-cream: #f6f1e6;
+  --color-cream-deep: #ebe3d2;
+  --color-beige: #d8cdb6;
+  --color-terracotta: #a35f1f;
+  --color-terracotta-soft: #e3ad5a;
+  --color-ink: #2b2418;
+  --color-ink-soft: #665c4c;
+  /* Chart marks. A stronger olive: passes the dataviz palette checks on white. */
+  --color-chart: #667524;
 
-  --font-serif: var(--font-cormorant);
-  --font-sans: var(--font-inter);
+  --font-serif: var(--font-display);
+  --font-sans: var(--font-body);
 }
 
 @layer base {
@@ -22,9 +28,9 @@
   }
 
   body {
-    font-family: var(--font-inter), system-ui, sans-serif;
-    color: #2e342d;
-    background: #f6f1e7;
+    font-family: var(--font-body), system-ui, sans-serif;
+    color: var(--color-ink);
+    background: var(--color-cream);
     -webkit-font-smoothing: antialiased;
     line-height: 1.6;
   }
@@ -35,9 +41,10 @@
   h4,
   h5,
   h6 {
-    font-family: var(--font-cormorant), Georgia, serif;
-    font-weight: 500;
-    line-height: 1.2;
+    font-family: var(--font-display), Georgia, serif;
+    font-weight: 400;
+    line-height: 1.08;
+    letter-spacing: -0.015em;
   }
 
   a {
@@ -55,31 +62,37 @@
     cursor: pointer;
   }
 
-  /* Focus states for accessibility */
   button:focus-visible,
   a:focus-visible,
   input:focus-visible,
   textarea:focus-visible,
   select:focus-visible {
-    outline: 2px solid #8aa58a;
+    outline: 2px solid var(--color-terracotta);
     outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--color-terracotta-soft);
+    color: var(--color-ink);
   }
 }
 
-@keyframes kenburns {
-  from {
-    transform: scale(1.05);
-  }
-
-  to {
-    transform: scale(1.15);
+/*
+ * iOS Safari zooms the page when a focused field's text is under 16px. This is
+ * deliberately outside any layer, so it wins over Tailwind's text-size utilities.
+ */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
   }
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(18px);
   }
 
   to {
@@ -88,29 +101,7 @@
   }
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-12px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideIn {
+@keyframes drawer-in {
   from {
     transform: translateX(100%);
   }
@@ -120,59 +111,96 @@
   }
 }
 
-@keyframes scaleIn {
+@keyframes fade-in {
   from {
     opacity: 0;
-    transform: scale(0.95);
   }
 
   to {
     opacity: 1;
-    transform: scale(1);
   }
+}
+
+@keyframes pending-bar {
+  from {
+    opacity: 1;
+    transform: scaleX(0.1);
+  }
+
+  to {
+    opacity: 1;
+    transform: scaleX(0.9);
+  }
+}
+
+.link-pending-bar {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 60;
+  height: 2px;
+  opacity: 0;
+  background: var(--color-terracotta);
+  transform-origin: left;
+  animation: pending-bar 3s cubic-bezier(0.2, 0.7, 0.2, 1) 200ms forwards;
+  pointer-events: none;
 }
 
 .animate-rise {
-  animation: rise 1.2s ease-out forwards;
+  animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-.animate-kenburns {
-  animation: kenburns 18s ease-out infinite alternate;
+.animate-drawer {
+  animation: drawer-in 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-.animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
+.animate-fade {
+  animation: fade-in 0.25s ease-out both;
 }
 
-.animate-in {
-  animation: fadeInDown 0.4s ease-out;
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
-.fade-in {
-  animation: fadeInDown 0.3s ease-out;
-}
-
-.slide-in-from-bottom-4 {
-  animation: slideIn 0.3s ease-out;
-}
-
-/* Smooth transitions */
 @layer components {
+  .page-width {
+    @apply mx-auto w-full max-w-[1320px] px-5 sm:px-8 lg:px-12;
+  }
+
+  .eyebrow {
+    @apply text-[12px] font-medium uppercase tracking-[0.16em] text-terracotta;
+  }
+
   .btn-primary {
-    @apply px-6 py-3 rounded-lg bg-sage-dark text-white font-semibold text-sm hover:bg-ink hover:shadow-lg transition-all active:scale-95;
+    @apply inline-flex items-center justify-center gap-3 bg-sage-dark px-7 py-4 text-[15px] font-medium text-cream transition-colors duration-200 hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50;
   }
 
-  .input-field {
-    @apply border border-beige rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-sage-light focus:border-sage-dark focus:bg-cream/50 transition-all;
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-3 border border-ink/30 px-7 py-4 text-[15px] font-medium text-ink transition-colors duration-200 hover:border-ink hover:bg-ink hover:text-cream;
   }
 
-  .card {
-    @apply bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow border border-transparent hover:border-sage-light/20;
+  .link-underline {
+    @apply underline decoration-ink/30 decoration-1 underline-offset-4 transition-colors duration-200 hover:decoration-ink;
   }
 
-  .section-header {
-    @apply inline-block text-[12px] tracking-[3px] uppercase text-sage-dark font-medium mb-3;
+  .field-label {
+    @apply mb-2 block text-[13px] font-medium text-ink;
+  }
+
+  .field {
+    @apply w-full border border-beige bg-white/60 px-4 py-3 text-[15px] text-ink outline-none transition-colors duration-200 placeholder:text-ink-soft/60 focus:border-sage-dark focus:bg-white;
+  }
+
+  /* The doorway shape of the house in the logo. */
+  .arch {
+    border-radius: 999px 999px 0 0;
   }
 }

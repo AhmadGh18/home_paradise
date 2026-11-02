@@ -1,96 +1,31 @@
-import { revalidateTag } from "next/cache";
-import { NextResponse, type NextRequest } from "next/server";
-import { badRequest, created, generateId, ok, serverError } from "@/lib/api";
+import { created, ok, readJsonObject, HttpError, route } from "@/lib/api";
 import { requireAdmin } from "@/lib/auth/admin";
-import {
-  createOrderWithInventory,
-  listOrders,
-  OutOfStockError,
-} from "@/lib/repo/orders";
-import { findProductByIdFresh, PRODUCTS_TAG } from "@/lib/repo/products";
-import type { Order, OrderItem } from "@/lib/types";
+import { enforceRateLimit } from "@/lib/rate-limit";
+import { listOrders, placeOrder } from "@/lib/repo/orders";
+import { invalidateProducts } from "@/lib/repo/products";
+import { parseNewOrder } from "@/lib/validation";
 
-export async function GET(request: NextRequest) {
+// Orders reserve stock with no payment step, so without a limit anyone could
+// buy out the whole catalogue with a script.
+const ORDER_LIMIT = { scope: "order", max: 10, windowSeconds: 15 * 60 };
+
+export const GET = route(async (request) => {
   const denied = await requireAdmin(request);
   if (denied) return denied;
   return ok(await listOrders());
-}
+});
 
-export async function POST(request: NextRequest) {
-  let body: Record<string, unknown>;
+export const POST = route(async (request) => {
   try {
-    body = (await request.json()) as Record<string, unknown>;
-  } catch {
-    return badRequest();
-  }
-
-  const customerName = String(body.customerName ?? "").trim();
-  const customerEmail = String(body.customerEmail ?? "").trim();
-  const customerPhone = String(body.customerPhone ?? "").trim();
-  const address = String(body.address ?? "").trim();
-  const rawItems = Array.isArray(body.items) ? body.items : [];
-
-  if (!customerName || !customerEmail || !customerPhone) {
-    return badRequest("Customer name, email and phone are required");
-  }
-  if (rawItems.length === 0) return badRequest("Order must contain items");
-
-  // Collapse duplicate lines and validate quantities up front. Prices and
-  // names are deliberately NOT read from the client — they are resolved from
-  // the database below so the order total can't be forged.
-  const requested = new Map<string, number>();
-  for (const raw of rawItems) {
-    const productId = String((raw as { productId?: unknown }).productId ?? "");
-    const quantity = Number((raw as { quantity?: unknown }).quantity);
-    if (!productId) return badRequest("Each item requires a productId");
-    if (!Number.isInteger(quantity) || quantity <= 0) {
-      return badRequest("Each item requires a positive integer quantity");
-    }
-    requested.set(productId, (requested.get(productId) ?? 0) + quantity);
-  }
-
-  const items: OrderItem[] = [];
-  for (const [productId, quantity] of requested) {
-    const product = await findProductByIdFresh(productId);
-    if (!product) return badRequest(`Unknown product: ${productId}`);
-    if (product.stock < quantity) {
-      return NextResponse.json(
-        { error: `"${product.name}" is out of stock` },
-        { status: 409 },
-      );
-    }
-    items.push({
-      productId: product.id,
-      productName: product.name,
-      price: product.price,
-      quantity,
-    });
-  }
-
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
-  const order: Order = {
-    id: generateId("ord"),
-    customerName,
-    customerEmail,
-    customerPhone,
-    address,
-    items,
-    total,
-    status: "pending",
-    createdAt: new Date().toISOString(),
-  };
-
-  try {
-    await createOrderWithInventory(order);
-    revalidateTag(PRODUCTS_TAG, "max"); // stock changed — refresh storefront caches
-    return created(order);
+    await enforceRateLimit(request, ORDER_LIMIT);
   } catch (err) {
-    if (err instanceof OutOfStockError) {
-      return NextResponse.json({ error: `${err.productName} is out of stock` }, {
-        status: 409,
-      });
-    }
-    return serverError("Failed to create order");
+    if (err instanceof HttpError) throw err;
+    // A limiter failure shouldn't stop a real customer from checking out.
+    console.error("[api] order rate limit unavailable:", (err as Error).message);
   }
-}
+
+  const input = parseNewOrder(await readJsonObject(request));
+  const order = await placeOrder(input);
+  invalidateProducts(); // Stock changed.
+  return created(order);
+});

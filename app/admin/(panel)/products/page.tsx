@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, PLACEHOLDER_IMAGE } from "@/lib/utils";
 import type { Product, Category } from "@/lib/types";
 
 type ModalMode = "create" | "edit" | null;
@@ -31,19 +31,26 @@ export default function AdminProductsPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
   const load = async () => {
     setLoading(true);
-    const [pr, cr] = await Promise.all([
-      fetch("/api/products"),
-      fetch("/api/categories"),
-    ]);
-    const [ps, cs] = await Promise.all([pr.json(), cr.json()]);
-    setProducts(ps);
-    setCategories(cs);
-    setLoading(false);
+    try {
+      const [pr, cr] = await Promise.all([
+        fetch("/api/products"),
+        fetch("/api/categories"),
+      ]);
+      if (!pr.ok || !cr.ok) throw new Error("Request failed");
+      const [ps, cs] = await Promise.all([pr.json(), cr.json()]);
+      setProducts(ps);
+      setCategories(cs);
+    } catch {
+      setSaveError("Failed to load products");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -83,55 +90,57 @@ export default function AdminProductsPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setSaveError(null);
+    // The original price stays in the body when blank, so it can be cleared.
     const body = {
       ...form,
       price: parseFloat(form.price),
-      originalPrice: form.originalPrice
-        ? parseFloat(form.originalPrice)
-        : undefined,
       stock: parseInt(form.stock),
     };
+    const url =
+      modalMode === "create" ? "/api/products" : `/api/products/${editingId}`;
+    const method = modalMode === "create" ? "POST" : "PUT";
     try {
+      let res: Response;
       // If an image file was selected, send as FormData so the server can store attachment
       if (imageFile) {
         const fd = new FormData();
         fd.append("image", imageFile);
-        Object.entries(body).forEach(([k, v]) => {
-          if (v !== undefined && v !== null) fd.append(k, String(v));
-        });
-        if (modalMode === "create") {
-          await fetch("/api/products", { method: "POST", body: fd });
-        } else if (editingId) {
-          await fetch(`/api/products/${editingId}`, {
-            method: "PUT",
-            body: fd,
-          });
-        }
+        Object.entries(body).forEach(([k, v]) => fd.append(k, String(v)));
+        res = await fetch(url, { method, body: fd });
       } else {
         // Fallback to JSON when no file selected (keeps URL workflow)
-        if (modalMode === "create") {
-          await fetch("/api/products", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-          });
-        } else if (editingId) {
-          await fetch(`/api/products/${editingId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-          });
-        }
+        res = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setSaveError(data?.error || "Failed to save product");
+        return;
       }
       setModalMode(null);
       await load();
+    } catch {
+      setSaveError("Network error while saving product");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/products/${id}`, { method: "DELETE" });
+    setSaveError(null);
+    try {
+      const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setSaveError(data?.error || "Failed to delete product");
+      }
+    } catch {
+      setSaveError("Network error while deleting product");
+    }
     setDeleteId(null);
     await load();
   };
@@ -142,7 +151,7 @@ export default function AdminProductsPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 pt-12 lg:pt-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
           <h1 className="font-serif text-3xl text-ink">Products</h1>
           <p className="text-ink-soft text-sm mt-1">
@@ -184,11 +193,82 @@ export default function AdminProductsPage() {
         />
       </div>
 
+      {saveError && !modalMode && (
+        <div className="text-red-600 text-sm mb-4">{saveError}</div>
+      )}
+
       {/* Table */}
       {loading ? (
         <div className="text-center py-20 text-ink-soft">Loading…</div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <>
+        {/* Phones: cards, so stock and actions don't need sideways scrolling */}
+        <ul className="md:hidden space-y-3">
+          {filtered.map((product) => (
+            <li
+              key={product.id}
+              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4"
+            >
+              <div className="flex gap-3">
+                <div className="w-16 h-16 rounded-xl overflow-hidden relative flex-shrink-0 bg-cream">
+                  <Image
+                    src={product.image || PLACEHOLDER_IMAGE}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-ink">{product.name}</div>
+                  <div className="text-[13px] text-ink-soft">
+                    {product.categoryName ?? "—"}
+                    {product.featured && " · Featured"}
+                    {product.badge && ` · ${product.badge}`}
+                  </div>
+                  <div className="mt-1 flex items-baseline justify-between gap-3 text-[14px]">
+                    <span className="font-semibold text-ink">
+                      {formatPrice(product.price)}
+                      {product.originalPrice && (
+                        <s className="text-xs font-normal text-ink-soft ml-1">
+                          {formatPrice(product.originalPrice)}
+                        </s>
+                      )}
+                    </span>
+                    <span
+                      className={product.stock <= 5 ? "text-red-600" : "text-ink-soft"}
+                    >
+                      {product.stock === 0 ? "Sold out" : `${product.stock} in stock`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => openEdit(product)}
+                  aria-label={`Edit ${product.name}`}
+                  className="h-11 text-sm text-ink border border-gray-200 rounded-full"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => setDeleteId(product.id)}
+                  aria-label={`Delete ${product.name}`}
+                  className="h-11 text-sm text-red-600 border border-gray-200 rounded-full"
+                >
+                  Delete
+                </button>
+              </div>
+            </li>
+          ))}
+          {filtered.length === 0 && (
+            <li className="text-center py-12 text-sm text-ink-soft">
+              No products found.
+            </li>
+          )}
+        </ul>
+
+        <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -220,7 +300,7 @@ export default function AdminProductsPage() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl overflow-hidden relative flex-shrink-0 bg-cream">
                           <Image
-                            src={product.image}
+                            src={product.image || PLACEHOLDER_IMAGE}
                             alt={product.name}
                             fill
                             className="object-cover"
@@ -284,6 +364,7 @@ export default function AdminProductsPage() {
             </table>
           </div>
         </div>
+        </>
       )}
 
       {/* Delete confirm */}
@@ -324,7 +405,8 @@ export default function AdminProductsPage() {
               </h3>
               <button
                 onClick={() => setModalMode(null)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                aria-label="Close"
+                className="w-11 h-11 -mr-2 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -512,6 +594,9 @@ export default function AdminProductsPage() {
                   Featured on home page
                 </label>
               </div>
+              {saveError && (
+                <div className="text-red-600 text-sm">{saveError}</div>
+              )}
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"

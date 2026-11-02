@@ -1,23 +1,24 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { sessionCookie, verifySession, type SessionPayload } from "./session";
 
-function timingSafeEqual(a: string, b: string): boolean {
-  // Compare over the longer length so we never early-return on a length
-  // mismatch (which would leak the secret's length via timing). A length
-  // difference still forces the result to false via the `matched` flag.
-  const len = Math.max(a.length, b.length);
-  let diff = a.length ^ b.length;
-  for (let i = 0; i < len; i++) {
-    diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
-  }
-  return diff === 0;
+/** Hashing first gives equal-length inputs, so the length isn't leaked either. */
+function safeEqual(a: string, b: string): boolean {
+  const digest = (value: string) => createHash("sha256").update(value).digest();
+  return timingSafeEqual(digest(a), digest(b));
 }
 
 export function verifyCredentials(username: string, password: string): boolean {
   const u = process.env.ADMIN_USERNAME;
   const p = process.env.ADMIN_PASSWORD;
-  if (!u || !p) return false;
-  return timingSafeEqual(username, u) && timingSafeEqual(password, p);
+  if (!u || !p) {
+    console.error("ADMIN_USERNAME and ADMIN_PASSWORD must be set to log in.");
+    return false;
+  }
+  // Compare both every time: stopping early would reveal a valid username.
+  const usernameMatches = safeEqual(username, u);
+  const passwordMatches = safeEqual(password, p);
+  return usernameMatches && passwordMatches;
 }
 
 export async function getAdminSession(

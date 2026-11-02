@@ -1,4 +1,4 @@
-import { sql } from "@vercel/postgres";
+import { migrate, sql } from "./db";
 import type { Category, Product, Order } from "./types";
 
 const SEED_CATEGORIES: Category[] = [
@@ -7,7 +7,7 @@ const SEED_CATEGORIES: Category[] = [
     name: "Flowers",
     slug: "flowers",
     image:
-      "https://images.unsplash.com/photo-1587653263995-422546a7a569?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1561181286-d3fee7d55364?auto=format&fit=crop&w=900&q=80",
     description: "Fresh-cut seasonal blooms",
   },
   {
@@ -15,7 +15,7 @@ const SEED_CATEGORIES: Category[] = [
     name: "Plants",
     slug: "plants",
     image:
-      "https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1491147334573-44cbb4602074?auto=format&fit=crop&w=900&q=80",
     description: "Indoor & outdoor greenery",
   },
   {
@@ -31,7 +31,7 @@ const SEED_CATEGORIES: Category[] = [
     name: "Gifts",
     slug: "gifts",
     image:
-      "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1512909006721-3d6018887383?auto=format&fit=crop&w=900&q=80",
     description: "Curated gift sets",
   },
 ];
@@ -47,7 +47,7 @@ const SEED_PRODUCTS: Product[] = [
     price: 48,
     originalPrice: 62,
     image:
-      "https://images.unsplash.com/photo-1509223197845-458d87318791?auto=format&fit=crop&w=700&q=80",
+      "https://images.unsplash.com/photo-1591886960571-74d43a9d4166?auto=format&fit=crop&w=700&q=80",
     categoryId: "cat-1",
     categoryName: "Flowers",
     badge: "New",
@@ -107,54 +107,7 @@ const SEED_ORDERS: Order[] = [
 ];
 
 async function seed() {
-  // Create tables
-  await sql`
-    CREATE TABLE IF NOT EXISTS categories (
-      id          TEXT PRIMARY KEY,
-      name        TEXT NOT NULL,
-      slug        TEXT NOT NULL UNIQUE,
-      image       TEXT NOT NULL DEFAULT '',
-      description TEXT NOT NULL DEFAULT ''
-    )
-  `;
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS products (
-      id            TEXT PRIMARY KEY,
-      name          TEXT NOT NULL,
-      slug          TEXT NOT NULL UNIQUE,
-      description   TEXT NOT NULL DEFAULT '',
-      details       TEXT NOT NULL DEFAULT '',
-      price         NUMERIC NOT NULL,
-      "originalPrice" NUMERIC,
-      image         TEXT NOT NULL DEFAULT '',
-      "categoryId"  TEXT NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
-      "categoryName" TEXT,
-      badge         TEXT,
-      stock         INTEGER NOT NULL DEFAULT 0,
-      featured      BOOLEAN NOT NULL DEFAULT FALSE,
-      "createdAt"   TEXT NOT NULL
-    )
-  `;
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS orders (
-      id              TEXT PRIMARY KEY,
-      "customerName"  TEXT NOT NULL,
-      "customerEmail" TEXT NOT NULL,
-      "customerPhone" TEXT NOT NULL,
-      address         TEXT NOT NULL DEFAULT '',
-      items           TEXT NOT NULL,
-      total           NUMERIC NOT NULL,
-      status          TEXT NOT NULL CHECK (status IN ('pending','processing','shipped','delivered','cancelled')),
-      "createdAt"     TEXT NOT NULL
-    )
-  `;
-
-  await sql`CREATE INDEX IF NOT EXISTS idx_products_category ON products("categoryId")`;
-  await sql`CREATE INDEX IF NOT EXISTS idx_products_featured ON products(featured)`;
-  await sql`CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)`;
-  await sql`CREATE INDEX IF NOT EXISTS idx_orders_created ON orders("createdAt")`;
+  await migrate();
 
   // Seed categories
   for (const c of SEED_CATEGORIES) {

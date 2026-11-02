@@ -1,18 +1,18 @@
 import type { Metadata } from 'next';
-import { Cormorant_Garamond, Inter } from 'next/font/google';
+import { Fraunces, Instrument_Sans } from 'next/font/google';
 import { CartProvider } from '@/context/CartContext';
 import './globals.css';
 
-const cormorant = Cormorant_Garamond({
-  variable: '--font-cormorant',
+const display = Fraunces({
+  variable: '--font-display',
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  style: ['normal', 'italic'],
+  axes: ['SOFT', 'opsz'],
 });
 
-const inter = Inter({
-  variable: '--font-inter',
+const body = Instrument_Sans({
+  variable: '--font-body',
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
 });
 
 export const metadata: Metadata = {
@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${cormorant.variable} ${inter.variable} h-full antialiased`}
+      className={`${display.variable} ${body.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-cream">
         <CartProvider>{children}</CartProvider>

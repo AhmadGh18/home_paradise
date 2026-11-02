@@ -1,11 +1,10 @@
-import { revalidateTag } from "next/cache";
-import { type NextRequest } from "next/server";
 import {
-  badRequest,
+  HttpError,
+  isUniqueViolation,
   notFound,
   ok,
   parseRequestBody,
-  serverError,
+  route,
 } from "@/lib/api";
 import { requireAdmin } from "@/lib/auth/admin";
 import { findCategoryById } from "@/lib/repo/categories";
@@ -13,83 +12,58 @@ import {
   deleteProductById,
   findProductById,
   findProductByIdFresh,
-  PRODUCTS_TAG,
+  invalidateProducts,
   updateProductById,
 } from "@/lib/repo/products";
-import type { Product } from "@/lib/types";
+import { isValidId, parseProductPatch } from "@/lib/validation";
 
 interface Context {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(_req: NextRequest, { params }: Context) {
+export const GET = route<Context>(async (_request, { params }) => {
   const { id } = await params;
-  const product = await findProductById(id);
+  const product = isValidId(id) ? await findProductById(id) : undefined;
   return product ? ok(product) : notFound();
-}
+});
 
-export async function PUT(request: NextRequest, { params }: Context) {
+export const PUT = route<Context>(async (request, { params }) => {
   const denied = await requireAdmin(request);
   if (denied) return denied;
 
   const { id } = await params;
-  const existing = await findProductByIdFresh(id);
+  const existing = isValidId(id) ? await findProductByIdFresh(id) : undefined;
   if (!existing) return notFound();
 
-  let body: Record<string, unknown>;
-  try {
-    body = await parseRequestBody(request);
-  } catch {
-    return badRequest();
-  }
+  const patch = parseProductPatch(await parseRequestBody(request), existing);
 
-  const patch: Partial<Product> = {};
-  if (body.name !== undefined) patch.name = String(body.name);
-  if (body.slug !== undefined) patch.slug = String(body.slug);
-  if (body.description !== undefined) patch.description = String(body.description);
-  if (body.details !== undefined) patch.details = String(body.details);
-  if (body.image !== undefined) patch.image = String(body.image);
-  if (body.badge !== undefined) patch.badge = String(body.badge) || undefined;
-  if (body.featured !== undefined)
-    patch.featured = body.featured === true || body.featured === "true";
-
-  if (body.price !== undefined) {
-    const price = Number(body.price);
-    if (!Number.isFinite(price) || price < 0) return badRequest("Invalid price");
-    patch.price = price;
-  }
-  if (body.originalPrice !== undefined) {
-    patch.originalPrice = body.originalPrice
-      ? Number(body.originalPrice)
-      : undefined;
-  }
-  if (body.stock !== undefined) {
-    const stock = Number(body.stock);
-    if (!Number.isInteger(stock) || stock < 0) return badRequest("Invalid stock");
-    patch.stock = stock;
-  }
-  if (body.categoryId !== undefined) {
-    const category = await findCategoryById(String(body.categoryId));
-    if (!category) return badRequest("Unknown categoryId");
-    patch.categoryId = category.id;
-    patch.categoryName = category.name;
+  let categoryName: string | undefined;
+  if (patch.categoryId !== undefined) {
+    const category = await findCategoryById(patch.categoryId);
+    if (!category) throw new HttpError(400, "Unknown category");
+    categoryName = category.name;
   }
 
   try {
-    const updated = await updateProductById(id, patch);
-    if (updated) revalidateTag(PRODUCTS_TAG, "max");
-    return updated ? ok(updated) : notFound();
-  } catch {
-    return serverError("Failed to update product");
+    const updated = await updateProductById(id, { ...patch, categoryName });
+    if (!updated) return notFound();
+    invalidateProducts();
+    return ok(updated);
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      throw new HttpError(409, "A product with this slug already exists");
+    }
+    throw err;
   }
-}
+});
 
-export async function DELETE(request: NextRequest, { params }: Context) {
+export const DELETE = route<Context>(async (request, { params }) => {
   const denied = await requireAdmin(request);
   if (denied) return denied;
 
   const { id } = await params;
-  const deleted = await deleteProductById(id);
-  if (deleted) revalidateTag(PRODUCTS_TAG, "max");
-  return deleted ? ok({ success: true }) : notFound();
-}
+  if (!isValidId(id) || !(await deleteProductById(id))) return notFound();
+
+  invalidateProducts();
+  return ok({ success: true });
+});

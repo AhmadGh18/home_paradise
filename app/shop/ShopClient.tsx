@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import ProductCard from '@/components/ProductCard';
-import type { Product, Category } from '@/lib/types';
+import type { Category, Product } from '@/lib/types';
 
 interface Props {
   products: Product[];
@@ -27,7 +27,7 @@ export default function ShopClient({
     }
 
     if (search.trim()) {
-      const q = search.toLowerCase();
+      const q = search.trim().toLowerCase();
       list = list.filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
@@ -43,108 +43,112 @@ export default function ShopClient({
     return list;
   }, [products, activeCategory, search, sortBy]);
 
+  const active = categories.find((c) => c.id === activeCategory);
+  const tabs = [{ id: 'all', name: 'Everything' }, ...categories];
+
+  const clearFilters = () => {
+    setSearch('');
+    setActiveCategory('all');
+  };
+
   return (
-    <div className="bg-cream min-h-screen">
-      {/* Page header */}
-      <div className="bg-cream-deep py-16">
-        <div className="max-w-[1240px] mx-auto px-6 text-center">
-          <span className="inline-block text-[12px] tracking-[3px] uppercase text-sage-dark font-medium mb-3">The Collection</span>
-          <h1 className="font-serif text-[clamp(36px,5vw,64px)] text-ink">Shop All</h1>
-          <p className="text-ink-soft mt-3 max-w-md mx-auto">
-            Flowers, plants, soaps, and gifts — curated with care.
-          </p>
+    <div className="page-width min-h-[70vh] pb-24 pt-12 lg:pt-16">
+      <header className="flex flex-wrap items-end justify-between gap-x-10 gap-y-3 pb-10">
+        <h1 className="font-serif text-[clamp(52px,8vw,112px)] leading-[0.95] tracking-[-0.03em] text-ink">
+          {active ? active.name : 'The shop'}
+        </h1>
+        <p className="max-w-[36ch] pb-2 text-[16px] leading-relaxed text-ink-soft">
+          {active?.description || 'Flowers, plants, soaps and gifts, curated with care.'}
+        </p>
+      </header>
+
+      {/* Filters */}
+      {/* Sticky only on large screens: on a phone it would cover a quarter of the view. */}
+      <div className="z-20 -mx-5 mb-10 border-y border-beige bg-cream/95 px-5 backdrop-blur sm:-mx-8 sm:px-8 lg:sticky lg:top-[72px] lg:mx-0 lg:px-0">
+        <div className="flex flex-col gap-x-8 lg:flex-row lg:items-center lg:justify-between">
+          <div
+            role="group"
+            aria-label="Filter by category"
+            className="-mb-px flex gap-6 overflow-x-auto [scrollbar-width:none]"
+          >
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveCategory(tab.id)}
+                aria-pressed={activeCategory === tab.id}
+                className={`shrink-0 border-b-2 py-4 text-[15px] transition-colors duration-200 ${
+                  activeCategory === tab.id
+                    ? 'border-terracotta text-ink'
+                    : 'border-transparent text-ink-soft hover:text-ink'
+                }`}
+              >
+                {tab.name}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-5 border-t border-beige py-2 lg:border-0 lg:py-0">
+            <label className="flex min-w-0 flex-1 items-center gap-2 lg:w-52 lg:flex-none">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4 shrink-0 fill-none stroke-ink-soft"
+                strokeWidth={1.5}
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+              <span className="sr-only">Search products</span>
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search"
+                className="w-full bg-transparent py-2.5 text-[15px] outline-none placeholder:text-ink-soft"
+              />
+            </label>
+            <label className="shrink-0">
+              <span className="sr-only">Sort products</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="cursor-pointer bg-transparent py-2.5 text-[15px] text-ink outline-none"
+              >
+                <option value="default">Featured</option>
+                <option value="newest">Newest</option>
+                <option value="price-asc">Price, low to high</option>
+                <option value="price-desc">Price, high to low</option>
+              </select>
+            </label>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-[1240px] mx-auto px-6 py-12">
-        {/* Filters toolbar */}
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-10">
-          {/* Search */}
-          <div className="relative w-full md:w-80">
-            <svg
-              viewBox="0 0 24 24"
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 stroke-ink-soft fill-none"
-              strokeWidth={1.8}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <path d="m20 20-3.5-3.5" />
-            </svg>
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search products…"
-              className="w-full pl-11 pr-4 py-3 rounded-full border border-beige bg-white text-sm outline-none focus:border-sage-dark transition-colors"
-            />
-          </div>
-
-          {/* Sort */}
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="border border-beige bg-white rounded-full px-5 py-3 text-sm text-ink-soft outline-none focus:border-sage-dark transition-colors cursor-pointer"
-          >
-            <option value="default">Sort: Featured</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-            <option value="newest">Newest</option>
-          </select>
-        </div>
-
-        {/* Category pills */}
-        <div className="flex flex-wrap gap-2.5 mb-10">
-          <button
-            onClick={() => setActiveCategory('all')}
-            className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
-              activeCategory === 'all'
-                ? 'bg-ink text-white'
-                : 'bg-white border border-beige text-ink-soft hover:border-ink/30'
-            }`}
-          >
-            All
-          </button>
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
-                activeCategory === cat.id
-                  ? 'bg-ink text-white'
-                  : 'bg-white border border-beige text-ink-soft hover:border-ink/30'
-              }`}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
-
-        {/* Results count */}
-        <p className="text-[13px] text-ink-soft mb-6">
-          {filtered.length} {filtered.length === 1 ? 'product' : 'products'}
-          {activeCategory !== 'all' && ` in ${categories.find((c) => c.id === activeCategory)?.name}`}
-          {search && ` for "${search}"`}
-        </p>
-
-        {/* Product grid */}
-        {filtered.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-7">
+      {filtered.length > 0 ? (
+        <>
+          <p className="mb-6 text-[14px] text-ink-soft" aria-live="polite">
+            {filtered.length} {filtered.length === 1 ? 'item' : 'items'}
+          </p>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-3 xl:grid-cols-4">
             {filtered.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
-        ) : (
-          <div className="text-center py-24">
-            <svg viewBox="0 0 24 24" className="w-12 h-12 stroke-ink-soft fill-none mx-auto mb-4" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="7" />
-              <path d="m20 20-3.5-3.5" />
-            </svg>
-            <p className="font-serif text-2xl text-ink mb-2">No products found</p>
-            <p className="text-ink-soft text-sm">Try a different search or filter.</p>
-          </div>
-        )}
-      </div>
+        </>
+      ) : (
+        <div className="py-24 text-center" aria-live="polite">
+          <p className="font-serif text-[32px] text-ink">
+            Nothing matches <em>that.</em>
+          </p>
+          <p className="mb-7 mt-2 text-[15px] text-ink-soft">
+            Try a different word or look through everything.
+          </p>
+          <button onClick={clearFilters} className="btn-secondary">
+            Show everything
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,9 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import LinkPendingBar from "@/components/LinkPendingBar";
 import { useAuth } from "./AdminAuthProvider";
+import logo from "../../public/logo1.png";
 
 const links = [
   {
@@ -69,21 +72,28 @@ export default function AdminSidebar() {
 
   return (
     <>
-      {/* Mobile hamburger */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-ink text-cream rounded-lg flex items-center justify-center shadow-lg"
-        aria-label="Open menu"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          className="w-5 h-5 stroke-current fill-none"
-          strokeWidth={2}
-          strokeLinecap="round"
+      {/* Mobile bar: a floating button would cover page content */}
+      <div className="lg:hidden fixed inset-x-0 top-0 z-30 h-16 px-2 flex items-center gap-1 bg-cream border-b border-beige">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="w-11 h-11 text-ink flex items-center justify-center"
+          aria-label="Open menu"
+          aria-expanded={mobileOpen}
         >
-          <path d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
+          <svg
+            viewBox="0 0 24 24"
+            className="w-6 h-6 stroke-current fill-none"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <path d="M4 8h16M4 16h16" />
+          </svg>
+        </button>
+        <Link href="/admin" className="font-serif text-[20px] text-ink">
+          HomeParadise
+        </Link>
+      </div>
 
       {/* Mobile overlay */}
       {mobileOpen && (
@@ -96,29 +106,26 @@ export default function AdminSidebar() {
       {/* Sidebar */}
       <aside
         className={`
-        fixed lg:static inset-y-0 left-0 z-40
-        w-60 min-h-screen bg-ink text-cream flex flex-col flex-shrink-0
+        fixed lg:sticky inset-y-0 lg:top-0 left-0 z-40
+        w-60 h-dvh bg-sage-dark text-cream flex flex-col flex-shrink-0
         transform transition-transform duration-300 ease-in-out
         ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}
       >
-        <div className="px-6 py-6 border-b border-white/10 flex items-center justify-between">
+        <div className="px-4 py-5 border-b border-white/15 flex items-center justify-between">
           <Link
             href="/"
-            className="font-serif text-xl text-cream flex items-center gap-2"
+            className="font-serif text-[19px] text-cream flex items-center gap-2.5"
           >
-            <svg
-              viewBox="0 0 24 24"
-              className="w-5 h-5 fill-sage-light"
-              aria-hidden="true"
-            >
-              <path d="M12 2C7 6 4 10 4 15a8 8 0 0 0 16 0c0-5-3-9-8-13zm0 4c3 3 6 6 6 10a6 6 0 0 1-12 0c0-4 3-7 6-10z" />
-            </svg>
+            {/* The logo's browns need a light background to stay legible. */}
+            <span className="w-10 h-10 shrink-0 rounded-full bg-cream flex items-center justify-center">
+              <Image src={logo} alt="" sizes="40px" className="w-10 h-10 object-contain" />
+            </span>
             HomeParadise
           </Link>
           <button
             onClick={() => setMobileOpen(false)}
-            className="lg:hidden w-8 h-8 flex items-center justify-center rounded hover:bg-white/10"
+            className="lg:hidden -mr-2 w-11 h-11 shrink-0 flex items-center justify-center hover:bg-white/10"
             aria-label="Close menu"
           >
             <svg
@@ -132,11 +139,7 @@ export default function AdminSidebar() {
           </button>
         </div>
 
-        <p className="px-6 pt-4 text-[11px] text-white/40 tracking-wider uppercase">
-          Admin
-        </p>
-
-        <nav className="flex-1 px-3 py-4">
+        <nav className="flex-1 px-3 py-4" aria-label="Admin">
           <ul className="space-y-1">
             {links.map(({ href, label, icon }) => {
               const active = pathname === href;
@@ -145,14 +148,16 @@ export default function AdminSidebar() {
                   <Link
                     href={href}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                    aria-current={active ? "page" : undefined}
+                    className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                       active
-                        ? "bg-sage-dark text-white"
-                        : "text-white/60 hover:bg-white/8 hover:text-white"
+                        ? "bg-cream text-ink"
+                        : "text-cream/75 hover:bg-white/10 hover:text-cream"
                     }`}
                   >
                     {icon}
                     {label}
+                    <LinkPendingBar />
                   </Link>
                 </li>
               );
@@ -160,11 +165,11 @@ export default function AdminSidebar() {
           </ul>
         </nav>
 
-        <div className="px-6 py-5 border-t border-white/10">
+        <div className="px-6 py-5 border-t border-white/15">
           <Link
             href="/"
             onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2 text-[13px] text-white/50 hover:text-white/80 transition-colors mb-4"
+            className="flex items-center gap-2 py-2.5 text-[13px] text-cream/75 hover:text-cream transition-colors"
           >
             <svg
               viewBox="0 0 24 24"
@@ -179,7 +184,7 @@ export default function AdminSidebar() {
           </Link>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 text-[13px] text-white/50 hover:text-red-400 transition-colors"
+            className="flex w-full items-center gap-2 py-2.5 text-[13px] text-cream/75 hover:text-cream transition-colors"
           >
             <svg
               viewBox="0 0 24 24"

@@ -43,105 +43,89 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <StoreLayout>
-      <nav className="max-w-[1240px] mx-auto px-6 pt-8 pb-2 text-[13px] text-ink-soft flex items-center gap-2">
-        <Link href="/" className="hover:text-sage-dark transition-colors">
-          Home
-        </Link>
-        <span>/</span>
-        <Link href="/shop" className="hover:text-sage-dark transition-colors">
-          Shop
-        </Link>
-        <span>/</span>
-        <span className="text-ink">{product.name}</span>
-      </nav>
+      <section className="page-width grid gap-8 pb-20 pt-6 lg:grid-cols-12 lg:gap-8 lg:pb-28 lg:pt-10">
+        <div className="relative aspect-[4/5] overflow-hidden bg-cream-deep lg:col-span-7">
+          {product.badge && (
+            <span className="absolute left-0 top-4 z-10 bg-cream px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.12em] text-ink">
+              {product.badge}
+            </span>
+          )}
+          <Image
+            src={product.image || PLACEHOLDER_IMAGE}
+            alt={product.name}
+            fill
+            priority
+            sizes="(max-width: 1024px) 100vw, 58vw"
+            className="object-cover"
+          />
+        </div>
 
-      <section className="max-w-[1240px] mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
-          <div className="relative aspect-square rounded-[28px] overflow-hidden shadow-[0_6px_24px_rgba(46,52,45,0.1)]">
-            {product.badge && (
-              <span className="absolute top-5 left-5 z-10 bg-white text-terracotta text-[11px] font-semibold tracking-wide uppercase px-3 py-1.5 rounded-full">
-                {product.badge}
-              </span>
-            )}
-            <Image
-              src={product.image || PLACEHOLDER_IMAGE}
-              alt={product.name}
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              className="object-cover"
-            />
-          </div>
+        <div className="lg:col-span-4 lg:col-start-9">
+          <div className="lg:sticky lg:top-28">
+            <nav aria-label="Breadcrumb" className="mb-8 flex flex-wrap gap-2 text-[13px] text-ink-soft">
+              <Link href="/shop" className="link-underline">
+                Shop
+              </Link>
+              {product.categoryName && (
+                <>
+                  <span aria-hidden="true">/</span>
+                  <span>{product.categoryName}</span>
+                </>
+              )}
+            </nav>
 
-          <div className="flex flex-col justify-center">
-            {product.categoryName && (
-              <span className="inline-block text-[12px] tracking-[3px] uppercase text-sage-dark font-medium mb-4">
-                {product.categoryName}
-              </span>
-            )}
-            <h1 className="font-serif text-[clamp(36px,4vw,52px)] text-ink mb-4 leading-tight">
+            <h1 className="font-serif text-[clamp(40px,4.4vw,64px)] leading-[1.02] tracking-[-0.02em] text-ink">
               {product.name}
             </h1>
-            <div className="flex items-baseline gap-3 mb-6">
-              <span className="text-[28px] font-semibold text-sage-dark">
-                {formatPrice(product.price)}
-              </span>
+
+            <div className="mt-5 flex items-baseline gap-3 text-[22px] tabular-nums text-ink">
+              {formatPrice(product.price)}
               {product.originalPrice && (
-                <span className="text-[18px] text-ink-soft line-through">
+                <s className="text-[16px] text-ink-soft">
                   {formatPrice(product.originalPrice)}
-                </span>
+                </s>
               )}
             </div>
-            <p className="text-base text-ink-soft leading-relaxed mb-4">
+
+            <p className="mt-6 text-[17px] leading-relaxed text-ink-soft">
               {product.description}
             </p>
+
+            <div className="mt-8">
+              <AddToCartButton product={product} />
+            </div>
+
             {product.details && (
-              <p className="text-sm text-ink-soft leading-relaxed mb-8 border-t border-beige pt-5">
-                {product.details}
-              </p>
+              <div className="mt-8 border-t border-beige pt-6">
+                <h2 className="mb-3 font-sans text-[12px] font-medium uppercase tracking-[0.16em] text-ink">
+                  The details
+                </h2>
+                <p className="text-[15px] leading-relaxed text-ink-soft">
+                  {product.details}
+                </p>
+              </div>
             )}
 
-            <div className="flex items-center gap-2 mb-6 text-sm">
-              <span
-                className={`w-2.5 h-2.5 rounded-full ${product.stock > 5 ? "bg-sage" : product.stock > 0 ? "bg-terracotta-soft" : "bg-red-400"}`}
-              />
-              <span className="text-ink-soft">
-                {product.stock > 5
-                  ? "In stock"
-                  : product.stock > 0
-                    ? `Only ${product.stock} left`
-                    : "Out of stock"}
-              </span>
-            </div>
-
-            <AddToCartButton product={product} />
-
-            <div className="grid grid-cols-3 gap-4 mt-8 pt-8 border-t border-beige">
-              {[
-                { icon: "🌿", label: "Sustainably sourced" },
-                { icon: "📦", label: "Plastic-free packaging" },
-                { icon: "🚚", label: "Free delivery over $60" },
-              ].map(({ icon, label }) => (
-                <div
-                  key={label}
-                  className="text-center text-[12px] text-ink-soft leading-snug"
-                >
-                  <span className="text-xl block mb-1">{icon}</span>
-                  {label}
-                </div>
-              ))}
-            </div>
+            <ul className="mt-8 divide-y divide-beige border-y border-beige text-[14px] text-ink-soft">
+              {["Sustainably sourced", "Plastic-free packaging", "Free delivery"].map(
+                (label) => (
+                  <li key={label} className="py-3">
+                    {label}
+                  </li>
+                ),
+              )}
+            </ul>
           </div>
         </div>
       </section>
 
       {related.length > 0 && (
-        <section className="bg-cream-deep py-20">
-          <div className="max-w-[1240px] mx-auto px-6">
-            <h2 className="font-serif text-[clamp(28px,3.5vw,40px)] text-ink mb-10 text-center">
-              You might also like
+        <section className="border-t border-beige py-20">
+          <div className="page-width">
+            <h2 className="mb-10 font-serif text-[clamp(32px,3.6vw,48px)] text-ink">
+              You might <em>also</em> like
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-4">
               {related.map((p: Product) => (
                 <ProductCard key={p.id} product={p} />
               ))}

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import LinkPendingBar from "@/components/LinkPendingBar";
 import { useCart } from "@/context/CartContext";
 import { formatPrice, PLACEHOLDER_IMAGE } from "@/lib/utils";
 import type { Product } from "@/lib/types";
@@ -13,128 +14,94 @@ interface Props {
 
 export default function ProductCard({ product }: Props) {
   const { addToCart } = useCart();
-  const [wishlisted, setWishlisted] = useState(false);
-  const [addedToCart, setAddedToCart] = useState(false);
+  const [added, setAdded] = useState(false);
+  const soldOut = product.stock <= 0;
 
-  const handleAddToCart = () => {
+  const handleAdd = () => {
     addToCart(product);
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2000);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1800);
   };
 
-  const stockStatus =
-    product.stock > 10
-      ? "In Stock"
-      : product.stock > 0
-        ? `Only ${product.stock} left`
-        : "Out of Stock";
-  const stockColor =
-    product.stock > 10
-      ? "text-sage-dark"
-      : product.stock > 0
-        ? "text-terracotta"
-        : "text-ink-soft";
-
   return (
-    <article className="bg-white rounded-[18px] overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_48px_rgba(46,52,45,0.18)] relative group border border-transparent hover:border-sage-light/20">
-      {/* Image */}
-      <div className="aspect-square overflow-hidden relative bg-cream">
-        {product.badge && (
-          <span className="absolute top-3.5 left-3.5 z-10 bg-terracotta text-white text-[11px] font-bold tracking-wide uppercase px-3 py-1.5 rounded-full shadow-lg">
-            {product.badge}
-          </span>
-        )}
-        <button
-          onClick={() => setWishlisted((w) => !w)}
-          className="absolute top-3.5 right-3.5 z-10 w-10 h-10 rounded-full bg-white flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:scale-75 sm:group-hover:scale-100 transition-all duration-300 shadow-md hover:shadow-lg"
-          aria-label="Add to wishlist"
+    <article className="group">
+      <div className="relative aspect-[4/5] overflow-hidden bg-cream-deep">
+        <Link
+          href={`/products/${product.id}`}
+          className="absolute inset-0"
+          aria-label={product.name}
         >
-          <svg
-            viewBox="0 0 24 24"
-            className={`w-5 h-5 transition-all ${wishlisted ? "fill-terracotta stroke-terracotta" : "fill-none stroke-ink hover:stroke-terracotta"}`}
-            strokeWidth={1.8}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z" />
-          </svg>
-        </button>
-        <Link href={`/products/${product.id}`} className="relative block w-full h-full">
           <Image
             src={product.image || PLACEHOLDER_IMAGE}
-            alt={product.name}
+            alt=""
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            className="object-cover transition-transform duration-700 group-hover:scale-[1.08]"
-            loading="lazy"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className={`object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] ${soldOut ? "opacity-60 grayscale-[35%]" : ""}`}
           />
+          <LinkPendingBar />
         </Link>
+
+        {(product.badge || soldOut) && (
+          <span className="pointer-events-none absolute left-0 top-3 bg-cream px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-ink">
+            {soldOut ? "Sold out" : product.badge}
+          </span>
+        )}
+
+        {!soldOut && (
+          <>
+            {/* Desktop: a bar that appears on hover. */}
+            <button
+              onClick={handleAdd}
+              className={`absolute inset-x-0 bottom-0 hidden translate-y-full py-3 text-[14px] font-medium transition-all duration-200 group-hover:translate-y-0 focus-visible:translate-y-0 lg:block ${
+                added
+                  ? "bg-terracotta text-cream"
+                  : "bg-sage-dark/95 text-cream hover:bg-ink"
+              }`}
+            >
+              {added ? "Added" : "Add to cart"}
+            </button>
+            {/* Touch screens have no hover, and a bar would cover the photo. */}
+            <button
+              onClick={handleAdd}
+              aria-label={`Add ${product.name} to cart`}
+              className={`absolute bottom-2 right-2 flex h-11 w-11 items-center justify-center rounded-full transition-colors duration-200 lg:hidden ${
+                added ? "bg-terracotta text-cream" : "bg-sage-dark text-cream"
+              }`}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5 fill-none stroke-current"
+                strokeWidth={1.75}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                {added ? <path d="M5 12l5 5L20 7" /> : <path d="M12 5v14M5 12h14" />}
+              </svg>
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Info */}
-      <div className="p-5 space-y-3">
-        <Link href={`/products/${product.id}`}>
-          <h3 className="font-serif text-[20px] text-ink mb-1.5 hover:text-sage-dark transition-colors line-clamp-2">
-            {product.name}
-          </h3>
-        </Link>
-        <p className="text-[13px] text-ink-soft leading-relaxed line-clamp-2 min-h-[32px]">
-          {product.description}
-        </p>
-
-        {/* Stock Status */}
-        <div className={`text-[12px] font-medium ${stockColor}`}>
-          {stockStatus}
-        </div>
-
-        {/* Price and CTA */}
-        <div className="flex items-end justify-between gap-2 pt-2 border-t border-cream">
-          <div className="flex flex-col">
-            <span className="text-[18px] font-bold text-sage-dark">
-              {formatPrice(product.price)}
-            </span>
-            {product.originalPrice && (
-              <small className="text-[12px] font-medium text-ink-soft line-through">
-                {formatPrice(product.originalPrice)}
-              </small>
-            )}
-          </div>
-          <button
-            onClick={handleAddToCart}
-            disabled={product.stock === 0}
-            className={`flex-1 px-3 py-2.5 rounded-lg text-[12px] font-bold inline-flex items-center justify-center gap-1.5 transition-all duration-300 ${
-              addedToCart
-                ? "bg-sage-dark text-white"
-                : product.stock === 0
-                  ? "bg-beige text-ink-soft cursor-not-allowed"
-                  : "bg-ink text-white hover:bg-sage-dark hover:scale-105 hover:shadow-lg active:scale-95"
-            }`}
-          >
-            <svg
-              viewBox="0 0 24 24"
-              className="w-4 h-4 stroke-current fill-none"
-              strokeWidth={2}
+      <div className="flex items-start justify-between gap-3 pt-3.5">
+        <div className="min-w-0">
+          <h3 className="font-serif text-[18px] leading-snug text-ink sm:text-[20px]">
+            <Link
+              href={`/products/${product.id}`}
+              className="transition-colors duration-200 hover:text-terracotta"
             >
-              {addedToCart ? (
-                <path
-                  d="M20 6 9 17l-5-5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              ) : (
-                <>
-                  <circle cx="9" cy="21" r="1" fill="currentColor" />
-                  <circle cx="20" cy="21" r="1" fill="currentColor" />
-                  <path
-                    d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </>
-              )}
-            </svg>
-            {addedToCart ? "Added" : "Add"}
-          </button>
+              {product.name}
+              <LinkPendingBar />
+            </Link>
+          </h3>
+        </div>
+        <div className="shrink-0 text-right text-[15px] tabular-nums text-ink">
+          {formatPrice(product.price)}
+          {product.originalPrice && (
+            <s className="block text-[13px] text-ink-soft">
+              {formatPrice(product.originalPrice)}
+            </s>
+          )}
         </div>
       </div>
     </article>

@@ -1,15 +1,23 @@
-import { unstable_cache } from "next/cache";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { sql } from "../db";
 import type { Product } from "../types";
+import type { ProductPatch } from "../validation";
 
 /**
- * Tag applied to every cached product read. Any route that mutates products
- * (or product stock) calls `revalidateTag(PRODUCTS_TAG)` so the storefront
- * picks up the change instead of serving a stale cache. Reads are cached
- * because the Neon database is remote (~0.5–2s per uncached query).
+ * Tag applied to every cached product read. Reads are cached because the Neon
+ * database is remote (~0.5–2s per uncached query).
  */
-export const PRODUCTS_TAG = "products";
+const PRODUCTS_TAG = "products";
 const CACHE_TTL_SECONDS = 3600;
+
+/**
+ * Expires cached products immediately, so an admin reloading the list sees
+ * their edit and shoppers see current stock. The "max" profile would keep
+ * serving the old data to the next visitor while it refreshed in the background.
+ */
+export function invalidateProducts() {
+  revalidateTag(PRODUCTS_TAG, { expire: 0 });
+}
 
 interface ProductRow {
   id: string;
@@ -47,49 +55,31 @@ function toProduct(row: ProductRow): Product {
   };
 }
 
+// Uploaded images are stored as data URLs, which are far too big to send with
+// every product. Each query below returns a link to the image route instead,
+// including a hash of the image so the URL changes when the image does.
+
 async function selectProducts(filters?: {
   categoryId?: string;
   featured?: boolean;
 }): Promise<Product[]> {
-  let result;
-
-  if (filters?.categoryId && filters?.featured !== undefined) {
-    result = await sql`
-      SELECT id, name, slug, description, details, price, "originalPrice", image,
-             "categoryId", "categoryName", badge, stock, featured, "createdAt"
-      FROM products
-      WHERE "categoryId" = ${filters.categoryId} AND featured = ${filters.featured}
-      ORDER BY "createdAt" DESC
-    `;
-  } else if (filters?.categoryId) {
-    result = await sql`
-      SELECT id, name, slug, description, details, price, "originalPrice", image,
-             "categoryId", "categoryName", badge, stock, featured, "createdAt"
-      FROM products
-      WHERE "categoryId" = ${filters.categoryId}
-      ORDER BY "createdAt" DESC
-    `;
-  } else if (filters?.featured !== undefined) {
-    result = await sql`
-      SELECT id, name, slug, description, details, price, "originalPrice", image,
-             "categoryId", "categoryName", badge, stock, featured, "createdAt"
-      FROM products
-      WHERE featured = ${filters.featured}
-      ORDER BY "createdAt" DESC
-    `;
-  } else {
-    result = await sql`
-      SELECT id, name, slug, description, details, price, "originalPrice", image,
-             "categoryId", "categoryName", badge, stock, featured, "createdAt"
-      FROM products
-      ORDER BY "createdAt" DESC
-    `;
-  }
-
-  return (result.rows as ProductRow[]).map(toProduct);
+  const categoryId = filters?.categoryId ?? null;
+  const featured = filters?.featured ?? null;
+  const { rows } = await sql`
+    SELECT id, name, slug, description, details, price, "originalPrice",
+           CASE WHEN image LIKE 'data:%'
+                THEN '/api/products/' || id || '/image/' || left(md5(image), 12)
+                ELSE image END AS image,
+           "categoryId", "categoryName", badge, stock, featured, "createdAt"
+    FROM products
+    WHERE (${categoryId}::text IS NULL OR "categoryId" = ${categoryId})
+      AND (${featured}::boolean IS NULL OR featured = ${featured})
+    ORDER BY "createdAt" DESC
+  `;
+  return (rows as ProductRow[]).map(toProduct);
 }
 
-/** Cached product listing. Invalidated via `revalidateTag(PRODUCTS_TAG)`. */
+/** Cached product listing. Invalidated via `invalidateProducts()`. */
 export const listProducts = unstable_cache(selectProducts, ["list-products"], {
   tags: [PRODUCTS_TAG],
   revalidate: CACHE_TTL_SECONDS,
@@ -97,7 +87,10 @@ export const listProducts = unstable_cache(selectProducts, ["list-products"], {
 
 async function selectProductById(id: string): Promise<Product | undefined> {
   const { rows } = await sql`
-    SELECT id, name, slug, description, details, price, "originalPrice", image,
+    SELECT id, name, slug, description, details, price, "originalPrice",
+           CASE WHEN image LIKE 'data:%'
+                THEN '/api/products/' || id || '/image/' || left(md5(image), 12)
+                ELSE image END AS image,
            "categoryId", "categoryName", badge, stock, featured, "createdAt"
     FROM products WHERE id = ${id}
   `;
@@ -111,10 +104,7 @@ export const findProductById = unstable_cache(
   { tags: [PRODUCTS_TAG], revalidate: CACHE_TTL_SECONDS },
 );
 
-/**
- * Uncached single-product read. Use for correctness-critical paths (checkout
- * stock checks, admin edits) where a stale snapshot must not be trusted.
- */
+/** Uncached single-product read, for admin edits. */
 export function findProductByIdFresh(
   id: string,
 ): Promise<Product | undefined> {
@@ -128,37 +118,69 @@ export async function findProductsByIds(ids: string[]): Promise<Product[]> {
   return found.filter((p): p is Product => p !== undefined);
 }
 
+/** The raw stored image, plus the short hash used in its URL. */
+export async function findProductImage(
+  id: string,
+): Promise<{ image: string; version: string } | undefined> {
+  const { rows } = await sql`
+    SELECT image, left(md5(image), 12) AS version FROM products WHERE id = ${id}
+  `;
+  return rows[0] as { image: string; version: string } | undefined;
+}
+
 export async function createProduct(p: Product): Promise<Product> {
-  await sql`
+  const { rows } = await sql`
     INSERT INTO products (id, name, slug, description, details, price, "originalPrice", image,
                           "categoryId", "categoryName", badge, stock, featured, "createdAt")
     VALUES (${p.id}, ${p.name}, ${p.slug}, ${p.description}, ${p.details ?? ""},
             ${p.price}, ${p.originalPrice ?? null}, ${p.image}, ${p.categoryId},
             ${p.categoryName ?? null}, ${p.badge ?? null}, ${p.stock}, ${p.featured},
             ${p.createdAt})
+    RETURNING id, name, slug, description, details, price, "originalPrice",
+              CASE WHEN image LIKE 'data:%'
+                   THEN '/api/products/' || id || '/image/' || left(md5(image), 12)
+                   ELSE image END AS image,
+              "categoryId", "categoryName", badge, stock, featured, "createdAt"
   `;
-  return p;
+  return toProduct(rows[0] as ProductRow);
 }
 
+/**
+ * Updates only the fields in `patch`, as a single statement, so an order placed
+ * during an edit can't have its stock change overwritten by a stale full row.
+ */
 export async function updateProductById(
   id: string,
-  patch: Partial<Product>,
+  patch: ProductPatch & { categoryName?: string },
 ): Promise<Product | undefined> {
-  const existing = await selectProductById(id);
-  if (!existing) return undefined;
-  const next: Product = { ...existing, ...patch };
-
-  await sql`
+  const setOriginalPrice = "originalPrice" in patch;
+  const setBadge = "badge" in patch;
+  const { rows } = await sql`
     UPDATE products SET
-      name = ${next.name}, slug = ${next.slug}, description = ${next.description},
-      details = ${next.details ?? ""}, price = ${next.price},
-      "originalPrice" = ${next.originalPrice ?? null}, image = ${next.image},
-      "categoryId" = ${next.categoryId}, "categoryName" = ${next.categoryName ?? null},
-      badge = ${next.badge ?? null}, stock = ${next.stock}, featured = ${next.featured}
+      name = COALESCE(${patch.name ?? null}, name),
+      slug = COALESCE(${patch.slug ?? null}, slug),
+      description = COALESCE(${patch.description ?? null}, description),
+      details = COALESCE(${patch.details ?? null}, details),
+      price = COALESCE(${patch.price ?? null}::numeric, price),
+      "originalPrice" = CASE WHEN ${setOriginalPrice}::boolean
+                             THEN ${patch.originalPrice ?? null}::numeric
+                             ELSE "originalPrice" END,
+      image = COALESCE(${patch.image ?? null}, image),
+      "categoryId" = COALESCE(${patch.categoryId ?? null}, "categoryId"),
+      "categoryName" = COALESCE(${patch.categoryName ?? null}, "categoryName"),
+      badge = CASE WHEN ${setBadge}::boolean
+                   THEN ${patch.badge ?? null}::text
+                   ELSE badge END,
+      stock = COALESCE(${patch.stock ?? null}::integer, stock),
+      featured = COALESCE(${patch.featured ?? null}::boolean, featured)
     WHERE id = ${id}
+    RETURNING id, name, slug, description, details, price, "originalPrice",
+              CASE WHEN image LIKE 'data:%'
+                   THEN '/api/products/' || id || '/image/' || left(md5(image), 12)
+                   ELSE image END AS image,
+              "categoryId", "categoryName", badge, stock, featured, "createdAt"
   `;
-
-  return next;
+  return rows[0] ? toProduct(rows[0] as ProductRow) : undefined;
 }
 
 export async function deleteProductById(id: string): Promise<boolean> {

@@ -63,7 +63,9 @@ export async function verifySession(
   token: string | undefined | null,
 ): Promise<SessionPayload | null> {
   if (!token) return null;
-  const [payloadB64, sigB64] = token.split(".");
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [payloadB64, sigB64] = parts;
   if (!payloadB64 || !sigB64) return null;
 
   try {
@@ -83,6 +85,9 @@ export async function verifySession(
       new TextDecoder().decode(base64UrlDecode(payloadB64)),
     ) as SessionPayload;
 
+    if (typeof payload.sub !== "string" || typeof payload.exp !== "number") {
+      return null;
+    }
     if (payload.exp < Math.floor(Date.now() / 1000)) return null;
     return payload;
   } catch {

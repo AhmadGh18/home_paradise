@@ -1,51 +1,33 @@
-import { type NextRequest } from "next/server";
-import { badRequest, notFound, ok, serverError } from "@/lib/api";
+import { notFound, ok, readJsonObject, route } from "@/lib/api";
 import { requireAdmin } from "@/lib/auth/admin";
 import { findOrderById, updateOrderStatusById } from "@/lib/repo/orders";
-import type { OrderStatus } from "@/lib/types";
-
-const VALID_STATUSES: OrderStatus[] = [
-  "pending",
-  "processing",
-  "shipped",
-  "delivered",
-  "cancelled",
-];
+import { invalidateProducts } from "@/lib/repo/products";
+import { isValidId, parseOrderStatus } from "@/lib/validation";
 
 interface Context {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(request: NextRequest, { params }: Context) {
+export const GET = route<Context>(async (request, { params }) => {
   const denied = await requireAdmin(request);
   if (denied) return denied;
 
   const { id } = await params;
-  const order = await findOrderById(id);
+  const order = isValidId(id) ? await findOrderById(id) : undefined;
   return order ? ok(order) : notFound();
-}
+});
 
-export async function PATCH(request: NextRequest, { params }: Context) {
+export const PATCH = route<Context>(async (request, { params }) => {
   const denied = await requireAdmin(request);
   if (denied) return denied;
 
   const { id } = await params;
-  let body: { status?: unknown };
-  try {
-    body = await request.json();
-  } catch {
-    return badRequest();
-  }
+  if (!isValidId(id)) return notFound();
 
-  const status = body.status;
-  if (typeof status !== "string" || !VALID_STATUSES.includes(status as OrderStatus)) {
-    return badRequest("Invalid status");
-  }
+  const { status } = await readJsonObject(request);
+  const result = await updateOrderStatusById(id, parseOrderStatus(status));
+  if (!result) return notFound();
 
-  try {
-    const updated = await updateOrderStatusById(id, status as OrderStatus);
-    return updated ? ok(updated) : notFound();
-  } catch {
-    return serverError("Failed to update order");
-  }
-}
+  if (result.stockChanged) invalidateProducts();
+  return ok(result.order);
+});

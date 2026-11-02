@@ -2,283 +2,213 @@ import Image from "next/image";
 import Link from "next/link";
 import StoreLayout from "@/components/StoreLayout";
 import ProductCard from "@/components/ProductCard";
-import { listProducts } from "@/lib/repo/products";
 import { listCategories } from "@/lib/repo/categories";
+import { listProducts } from "@/lib/repo/products";
 import { PLACEHOLDER_IMAGE } from "@/lib/utils";
-import type { Product } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-const testimonials = [
-  {
-    name: "Amelia K.",
-    role: "Verified buyer",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80",
-    quote:
-      '"My monstera arrived so carefully packed. Two months in, it\'s thriving — and the handwritten note made my week."',
-  },
-  {
-    name: "Daniel R.",
-    role: "Verified buyer",
-    avatar:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&q=80",
-    quote:
-      '"The lavender soap smells like a garden in Provence. I\'ve re-ordered three times and gifted just as many."',
-  },
-  {
-    name: "Priya S.",
-    role: "Verified buyer",
-    avatar:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80",
-    quote:
-      '"Everything feels considered — from the recycled kraft box to the dried eucalyptus tucked on top. Just beautiful."',
-  },
-];
+function Arrow({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`${className} fill-none stroke-current`}
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 12h16M14 6l6 6-6 6" />
+    </svg>
+  );
+}
 
 export default async function HomePage() {
-  const [featured, categories] = await Promise.all([
-    listProducts({ featured: true }),
+  const [products, categories] = await Promise.all([
+    listProducts(),
     listCategories(),
   ]);
 
+  // Featured items first, topped up with the newest so the row is never sparse.
+  const highlights = [
+    ...products.filter((p) => p.featured),
+    ...products.filter((p) => !p.featured),
+  ].slice(0, 4);
+
   return (
     <StoreLayout>
-      {/* ── Hero ── */}
-      <section
-        className="relative min-h-[92vh] flex items-center justify-center overflow-hidden text-white text-center"
-        aria-label="Hero"
-      >
-        <div className="absolute inset-0 animate-kenburns">
-          <Image
-            src="https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=2000&q=80"
-            alt="Lush garden"
-            fill
-            priority
-            className="object-cover"
-            sizes="100vw"
-          />
+      {/* Hero */}
+      <section className="overflow-hidden border-b border-beige">
+        <div className="page-width grid items-end gap-10 pt-12 lg:grid-cols-12 lg:gap-8 lg:pt-16">
+          <div className="animate-rise pb-4 lg:col-span-7 lg:pb-20">
+            <p className="eyebrow mb-6">Flowers, plants, soaps &amp; gifts</p>
+            <h1 className="font-serif text-[clamp(56px,10.5vw,148px)] leading-[0.95] tracking-[-0.03em] text-ink">
+              Bring nature <em className="text-sage">home.</em>
+            </h1>
+            <p className="mt-8 max-w-[46ch] text-[18px] leading-relaxed text-ink-soft">
+              Hand-picked flowers, living plants, and artisan soaps, thoughtfully
+              crafted to turn every room into a moment of calm.
+            </p>
+            <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
+              <Link href="/shop" className="btn-primary">
+                Shop the collection
+                <Arrow />
+              </Link>
+              <Link href="/#about" className="link-underline text-[15px]">
+                Our story
+              </Link>
+            </div>
+          </div>
+
+          <div className="relative mx-auto w-full max-w-[480px] lg:col-span-5 lg:max-w-none">
+            {/* The sun from the logo, rising behind the doorway. */}
+            <div
+              className="absolute -right-6 top-2 h-24 w-24 rounded-full bg-terracotta-soft sm:-right-8 sm:h-32 sm:w-32"
+              aria-hidden="true"
+            />
+            <div className="arch relative aspect-[4/5] overflow-hidden bg-cream-deep">
+              <Image
+                src="https://images.unsplash.com/photo-1558293842-c0fd3db86157?auto=format&fit=crop&w=1200&q=80"
+                alt="A sunlit garden path under flowering wisteria"
+                fill
+                priority
+                className="object-cover"
+                sizes="(max-width: 1024px) 480px, 42vw"
+              />
+            </div>
+          </div>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/30 via-ink/40 to-ink/60" />
-        <div className="relative z-10 max-w-[760px] px-6 py-32 md:py-40 animate-rise">
-          <span className="inline-block text-[12px] font-bold tracking-[4px] uppercase mb-6 opacity-95 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
-            Botanical Boutique
-          </span>
-          <h1 className="font-serif text-[clamp(48px,8vw,96px)] text-white font-medium mb-6 leading-[1.08]">
-            Bring Nature{" "}
-            <em className="italic text-sage-light not-italic font-serif">
-              Home
-            </em>
-          </h1>
-          <p className="text-[16px] max-w-[540px] mx-auto mb-10 opacity-95 leading-relaxed font-light">
-            Hand-picked flowers, living plants, and artisan soaps — thoughtfully
-            crafted to turn every room into a moment of calm.
-          </p>
+      </section>
+
+      {/* Categories */}
+      <section className="page-width py-20 lg:py-28">
+        <div className="mb-12 flex flex-wrap items-end justify-between gap-x-10 gap-y-5 lg:mb-16">
+          <div>
+            <p className="eyebrow mb-4">The collection</p>
+            <h2 className="max-w-[17ch] font-serif text-[clamp(38px,5vw,72px)] leading-[1.02] text-ink">
+              Find what your home{" "}
+              <em className="whitespace-nowrap text-sage">is missing.</em>
+            </h2>
+          </div>
           <Link
             href="/shop"
-            className="inline-flex items-center gap-3 bg-white text-ink px-10 py-4 rounded-full font-bold text-[15px] hover:bg-sage-light hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 active:scale-95"
+            className="inline-flex items-center gap-2 pb-2 text-[15px] transition-colors duration-200 hover:text-terracotta"
           >
-            <span>Shop Now</span>
-            <svg
-              viewBox="0 0 24 24"
-              className="w-4 h-4 stroke-current fill-none"
-              strokeWidth={2.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M5 12h14" />
-              <path d="m13 5 7 7-7 7" />
-            </svg>
+            Shop everything <Arrow />
+          </Link>
+        </div>
+
+        {/* A row of arched windows; every second one sits lower for rhythm. */}
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-4">
+          {categories.map((cat, index) => (
+            <li key={cat.id} className={index % 2 === 1 ? "mt-10 lg:mt-14" : ""}>
+              <Link href={`/shop?category=${cat.slug}`} className="group block">
+                <div className="arch relative aspect-[3/4] overflow-hidden bg-cream-deep">
+                  <Image
+                    src={cat.image || PLACEHOLDER_IMAGE}
+                    alt=""
+                    fill
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    sizes="(max-width: 1024px) 50vw, 25vw"
+                  />
+                </div>
+                <div className="flex items-start justify-between gap-3 pt-4">
+                  <div className="min-w-0">
+                    <h3 className="font-serif text-[clamp(24px,2.4vw,34px)] leading-tight text-ink transition-colors duration-200 group-hover:text-terracotta">
+                      {cat.name}
+                    </h3>
+                    <p className="mt-1 text-[14px] leading-snug text-ink-soft">
+                      {cat.description}
+                    </p>
+                  </div>
+                  <Arrow className="mt-2 h-5 w-5 shrink-0 text-ink transition-transform duration-200 group-hover:translate-x-1" />
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* Highlights */}
+      {highlights.length > 0 && (
+        <section className="bg-cream-deep/60 py-20 lg:py-28">
+          <div className="page-width">
+            <div className="mb-10 flex flex-wrap items-end justify-between gap-4 lg:mb-14">
+              <div>
+                <p className="eyebrow mb-4">In the shop now</p>
+                <h2 className="font-serif text-[clamp(38px,4.6vw,64px)] text-ink">
+                  Our current <em>favourites</em>
+                </h2>
+              </div>
+              <Link
+                href="/shop"
+                className="inline-flex items-center gap-2 pb-2 text-[15px] transition-colors duration-200 hover:text-terracotta"
+              >
+                View everything <Arrow />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-4">
+              {highlights.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Story */}
+      <section id="about" className="scroll-mt-20 bg-sage-dark text-cream">
+        <div className="page-width grid items-center gap-12 py-20 lg:grid-cols-12 lg:gap-8 lg:py-28">
+          <div className="relative mx-auto w-full max-w-[440px] lg:col-span-5 lg:mx-0">
+            <div className="arch relative aspect-[4/5] overflow-hidden bg-sage">
+              <Image
+                src="https://images.unsplash.com/photo-1487530811176-3780de880c2d?auto=format&fit=crop&w=1000&q=80"
+                alt="A hand-tied bouquet of garden roses and foliage"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 440px, 36vw"
+              />
+            </div>
+          </div>
+          <div className="lg:col-span-6 lg:col-start-7">
+            <p className="mb-5 text-[12px] font-medium uppercase tracking-[0.16em] text-terracotta-soft">
+              Our story
+            </p>
+            <h2 className="font-serif text-[clamp(36px,4.6vw,64px)]">
+              It began in a small, <em className="text-terracotta-soft">sunlit</em>{" "}
+              greenhouse.
+            </h2>
+            <div className="mt-8 max-w-[56ch] space-y-5 text-[17px] leading-relaxed text-cream/85">
+              <p>
+                HomeParadise started with one quiet belief: homes feel more like
+                home when nature lives in them. Every bouquet we wrap, every soap
+                we pour, every plant we pot is finished by hand, by a small team
+                who care deeply about the detail.
+              </p>
+              <p>
+                From a single clay pot to a hand-tied bouquet, each piece is a
+                tiny act of care, from our makers to you.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Closing prompt */}
+      <section className="page-width flex flex-col items-start justify-between gap-8 py-20 lg:flex-row lg:items-end lg:py-28">
+        <h2 className="max-w-[16ch] font-serif text-[clamp(38px,5vw,72px)] text-ink">
+          Have something <em className="text-sage">special</em> in mind?
+        </h2>
+        <div className="max-w-[38ch]">
+          <p className="mb-6 text-[17px] leading-relaxed text-ink-soft">
+            Tell us about the occasion or the room, and we&apos;ll help you find
+            the right piece, or put together a custom bouquet.
+          </p>
+          <Link href="/contact" className="btn-secondary">
+            Talk to us
           </Link>
         </div>
       </section>
-
-      {/* ── Categories ── */}
-      <section className="py-16 md:py-32 bg-cream" id="shop">
-        <div className="max-w-[1240px] mx-auto px-6">
-          <div className="text-center mb-16">
-            <span className="section-header">Shop</span>
-            <h2 className="font-serif text-[clamp(36px,5vw,56px)] max-w-[620px] mx-auto mb-4 text-ink">
-              Shop by Category
-            </h2>
-            <p className="text-ink-soft max-w-[580px] mx-auto text-base leading-relaxed">
-              A curated collection of greenery, gifts, and everyday luxuries —
-              each one chosen with care.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/shop?category=${cat.slug}`}
-                className="relative rounded-2xl overflow-hidden aspect-[3/4] cursor-pointer shadow-[0_8px_32px_rgba(46,52,45,0.1)] hover:-translate-y-3 hover:shadow-[0_16px_48px_rgba(46,52,45,0.16)] transition-all duration-300 group border border-white/50"
-              >
-                <Image
-                  src={cat.image || PLACEHOLDER_IMAGE}
-                  alt={cat.name}
-                  fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-[1.1]"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent from-30% via-transparent via-60% to-black/70 flex flex-col justify-end p-6 text-white">
-                  <h3 className="font-serif text-[30px] text-white mb-2 font-semibold">
-                    {cat.name}
-                  </h3>
-                  <span className="text-[13px] opacity-90 flex items-center gap-2 group-hover:gap-3 transition-all duration-300 font-medium">
-                    {cat.description}
-                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-                      <path d="M5 12h14M13 5l7 7-7 7" />
-                    </svg>
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Featured Products ── */}
-      <section className="py-16 md:py-32 bg-white">
-        <div className="max-w-[1240px] mx-auto px-6">
-          <div className="text-center mb-16">
-            <span className="section-header">Bestsellers</span>
-            <h2 className="font-serif text-[clamp(36px,5vw,56px)] max-w-[620px] mx-auto mb-4 text-ink">
-              Loved by our community
-            </h2>
-            <p className="text-ink-soft max-w-[580px] mx-auto text-base leading-relaxed">
-              The pieces our community keeps coming back for — refreshed weekly.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featured.map((product: Product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-          <div className="text-center mt-16">
-            <Link
-              href="/shop"
-              className="inline-flex items-center gap-2.5 border-2 border-ink/20 text-ink px-9 py-3.5 rounded-full text-[13px] font-bold uppercase tracking-wide hover:bg-ink hover:text-white hover:border-ink transition-all duration-300 active:scale-95"
-            >
-              View All Products
-              <svg
-                viewBox="0 0 24 24"
-                className="w-4 h-4 stroke-current fill-none"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-              >
-                <path d="M5 12h14M13 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Story ── */}
-      <section className="py-32 bg-cream-deep" id="about">
-        <div className="max-w-[1240px] mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-            <div className="rounded-3xl overflow-hidden aspect-[4/5] shadow-[0_12px_48px_rgba(46,52,45,0.12)] relative order-2 lg:order-1">
-              <Image
-                src="https://images.unsplash.com/photo-1520962922320-2038eebab146?auto=format&fit=crop&w=1000&q=80"
-                alt="Florist arranging bouquet"
-                fill
-                className="object-cover hover:scale-105 transition-transform duration-700"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                loading="lazy"
-              />
-            </div>
-            <div className="order-1 lg:order-2">
-              <span className="inline-block text-[11px] font-bold tracking-[3px] uppercase text-terracotta mb-4 bg-terracotta-soft/20 px-3.5 py-1.5 rounded-full">
-                Our Story
-              </span>
-              <h2 className="font-serif text-[clamp(32px,4vw,52px)] mb-6 text-ink leading-tight">
-                Handcrafted with love, delivered to your door.
-              </h2>
-              <p className="text-ink-soft text-[15px] mb-5 leading-relaxed">
-                HomeParadise began in a small sunlit greenhouse with one quiet
-                belief — that homes feel more like home when nature lives in
-                them. Every bouquet we wrap, every soap we pour, every plant we
-                pot is finished by hand, by a small team who cares deeply about
-                the detail.
-              </p>
-              <p className="text-ink-soft text-[15px] mb-10 leading-relaxed">
-                From a single clay pot to a hand-tied bouquet, each piece is a
-                tiny act of care — from our makers to you.
-              </p>
-              <div className="flex gap-12 pt-8 border-t-2 border-ink/10">
-                {[
-                  ["12k+", "Happy homes"],
-                  ["250+", "Curated pieces"],
-                  ["100%", "Handcrafted"],
-                ].map(([num, label]) => (
-                  <div key={label} className="flex flex-col">
-                    <span className="font-serif text-[42px] font-bold text-sage-dark leading-none">
-                      {num}
-                    </span>
-                    <span className="text-[12px] text-ink-soft mt-2 font-medium">
-                      {label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Testimonials ── */}
-      <section className="py-32 bg-cream" id="reviews">
-        <div className="max-w-[1240px] mx-auto px-6">
-          <div className="text-center mb-16">
-            <span className="section-header">Reviews</span>
-            <h2 className="font-serif text-[clamp(36px,5vw,56px)] text-ink">
-              Loved by our customers
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-[1020px] mx-auto">
-            {testimonials.map((t) => (
-              <article
-                key={t.name}
-                className="bg-white p-8 rounded-2xl shadow-[0_6px_24px_rgba(46,52,45,0.08)] hover:-translate-y-2 hover:shadow-[0_12px_48px_rgba(46,52,45,0.12)] transition-all duration-300 border border-white hover:border-sage-light/30"
-              >
-                <div className="flex gap-1.5 text-terracotta mb-5">
-                  {[...Array(5)].map((_, i) => (
-                    <svg
-                      key={i}
-                      viewBox="0 0 24 24"
-                      className="w-4 h-4 fill-current"
-                    >
-                      <path d="M12 2l3 7h7l-5.7 4.2 2.2 7L12 16l-6.5 4.2 2.2-7L2 9h7z" />
-                    </svg>
-                  ))}
-                </div>
-                <p className="font-serif text-[18px] italic leading-relaxed text-ink mb-7">
-                  {t.quote}
-                </p>
-                <div className="flex items-center gap-4 pt-5 border-t border-beige">
-                  <Image
-                    src={t.avatar}
-                    alt={t.name}
-                    width={48}
-                    height={48}
-                    className="rounded-full object-cover w-12 h-12 flex-shrink-0"
-                  />
-                  <div>
-                    <div className="text-[14px] font-bold text-ink">
-                      {t.name}
-                    </div>
-                    <div className="text-[12px] text-ink-soft font-medium">
-                      {t.role}
-                    </div>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
     </StoreLayout>
   );
 }

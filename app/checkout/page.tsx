@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, PLACEHOLDER_IMAGE } from "@/lib/utils";
 import StoreLayout from "@/components/StoreLayout";
 
 export default function CheckoutPage() {
@@ -20,32 +20,19 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState("");
   const [orderError, setOrderError] = useState("");
 
-  // Redirect if no items in cart
   if (state.items.length === 0 && !orderPlaced) {
     return (
       <StoreLayout>
-        <div className="min-h-screen bg-cream flex items-center justify-center px-6">
-          <div className="text-center max-w-md">
-            <svg
-              viewBox="0 0 24 24"
-              className="w-20 h-20 mx-auto stroke-ink-soft fill-none mb-6"
-              strokeWidth={1.2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="9" cy="21" r="1" fill="currentColor" />
-              <circle cx="20" cy="21" r="1" fill="currentColor" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-            </svg>
-            <h1 className="font-serif text-3xl text-ink mb-3">Cart is Empty</h1>
-            <p className="text-ink-soft mb-8">
-              Add some beautiful things before checking out.
-            </p>
-            <Link
-              href="/shop"
-              className="inline-flex items-center gap-2 bg-sage-dark text-white px-8 py-3 rounded-full font-semibold hover:bg-ink transition-all duration-300"
-            >
-              Continue Shopping
+        <div className="page-width flex min-h-[70vh] flex-col justify-center py-20">
+          <h1 className="font-serif text-[clamp(48px,8vw,104px)] leading-[0.98] tracking-[-0.03em] text-ink">
+            Your cart is <em className="text-sage">empty.</em>
+          </h1>
+          <p className="mb-9 mt-6 text-[18px] text-ink-soft">
+            Add something beautiful before checking out.
+          </p>
+          <div>
+            <Link href="/shop" className="btn-primary">
+              Browse the shop
             </Link>
           </div>
         </div>
@@ -97,41 +84,26 @@ export default function CheckoutPage() {
   if (orderPlaced) {
     return (
       <StoreLayout>
-        <div className="min-h-screen bg-cream flex items-center justify-center px-6 py-20">
-          <div className="text-center max-w-md">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-sage-light to-sage-dark flex items-center justify-center shadow-lg mx-auto mb-8">
-              <svg
-                viewBox="0 0 24 24"
-                className="w-12 h-12 stroke-white fill-none"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M20 6 9 17l-5-5" />
-              </svg>
-            </div>
-            <h1 className="font-serif text-4xl text-ink mb-3">
-              Order Confirmed!
-            </h1>
-            <p className="text-ink-soft text-lg mb-2">
-              Thank you for your purchase.
+        <div className="page-width flex min-h-[70vh] flex-col justify-center py-20">
+          <p className="eyebrow mb-5">Order received</p>
+          <h1 className="font-serif text-[clamp(48px,8vw,104px)] leading-[0.98] tracking-[-0.03em] text-ink">
+            Thank you<em className="text-sage">.</em>
+          </h1>
+          <p className="mt-6 max-w-[48ch] text-[18px] leading-relaxed text-ink-soft">
+            We&apos;ve received your order and will be in touch using the details
+            you gave us.
+          </p>
+          {orderId && (
+            <p className="mt-6 text-[14px] text-ink-soft">
+              Order reference
+              <span className="mt-1 block break-all font-mono text-[14px] text-ink">
+                {orderId}
+              </span>
             </p>
-            {orderId && (
-              <p className="text-ink-soft mb-2">
-                Your order number is{" "}
-                <span className="font-mono font-semibold text-ink">
-                  {orderId}
-                </span>
-              </p>
-            )}
-            <p className="text-ink-soft mb-10">
-              We&apos;ll send tracking details to your email and phone shortly.
-            </p>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 bg-sage-dark text-white px-10 py-3 rounded-full font-semibold hover:bg-ink transition-all duration-300 hover:shadow-lg"
-            >
-              Back to Home
+          )}
+          <div className="mt-9">
+            <Link href="/" className="btn-primary">
+              Back to home
             </Link>
           </div>
         </div>
@@ -141,186 +113,165 @@ export default function CheckoutPage() {
 
   return (
     <StoreLayout>
-      <div className="min-h-screen bg-cream py-20">
-        <div className="max-w-6xl mx-auto px-6">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-ink-soft mb-12">
-            <Link
-              href="/shop"
-              className="hover:text-sage-dark transition-colors"
-            >
-              Shop
-            </Link>
-            <span>/</span>
-            <span className="text-ink font-medium">Checkout</span>
-          </div>
+      <div className="page-width pb-24 pt-12 lg:pt-16">
+        <h1 className="mb-12 font-serif text-[clamp(44px,6vw,80px)] leading-[0.98] tracking-[-0.025em] text-ink">
+          Checkout
+        </h1>
 
-          <h1 className="font-serif text-5xl text-ink mb-12">Order Summary</h1>
+        <div className="grid gap-12 lg:grid-cols-12 lg:gap-8">
+          <form onSubmit={handleSubmit} className="lg:col-span-7">
+            <h2 className="mb-6 border-t border-ink/80 pt-5 font-serif text-[26px] text-ink">
+              Where should we send it?
+            </h2>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            {/* Checkout Form */}
-            <div className="lg:col-span-2">
-              <form onSubmit={handleSubmit} className="space-y-8">
-                {/* Shipping Info */}
-                <div className="bg-white p-8 rounded-2xl shadow-sm border border-white hover:border-sage-light/30 transition-colors">
-                  <h2 className="font-serif text-2xl text-ink mb-6">
-                    Shipping Information
-                  </h2>
+            <div className="space-y-5">
+              <div>
+                <label htmlFor="name" className="field-label">
+                  Full name
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  required
+                  autoComplete="name"
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, name: e.target.value }))
+                  }
+                  className="field"
+                />
+              </div>
 
-                  <div className="space-y-5">
-                    <div>
-                      <label className="block text-sm font-bold text-ink mb-2 uppercase tracking-wide">
-                        Full Name *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={form.name}
-                        onChange={(e) =>
-                          setForm((f) => ({ ...f, name: e.target.value }))
-                        }
-                        className="w-full border border-beige rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-sage-light focus:border-sage-dark transition-all bg-white"
-                        placeholder="Jane Smith"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-sm font-bold text-ink mb-2 uppercase tracking-wide">
-                          Email *
-                        </label>
-                        <input
-                          type="email"
-                          required
-                          value={form.email}
-                          onChange={(e) =>
-                            setForm((f) => ({ ...f, email: e.target.value }))
-                          }
-                          className="w-full border border-beige rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-sage-light focus:border-sage-dark transition-all bg-white"
-                          placeholder="jane@example.com"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-bold text-ink mb-2 uppercase tracking-wide">
-                          Phone *
-                        </label>
-                        <input
-                          type="tel"
-                          required
-                          value={form.phone}
-                          onChange={(e) =>
-                            setForm((f) => ({ ...f, phone: e.target.value }))
-                          }
-                          className="w-full border border-beige rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-sage-light focus:border-sage-dark transition-all bg-white"
-                          placeholder="+1 (555) 000-0000"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-bold text-ink mb-2 uppercase tracking-wide">
-                        Delivery Address *
-                      </label>
-                      <textarea
-                        required
-                        rows={4}
-                        value={form.address}
-                        onChange={(e) =>
-                          setForm((f) => ({ ...f, address: e.target.value }))
-                        }
-                        className="w-full border border-beige rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-sage-light focus:border-sage-dark transition-all bg-white resize-none"
-                        placeholder="12 Garden Lane, London, UK"
-                      />
-                    </div>
-                  </div>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="email" className="field-label">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, email: e.target.value }))
+                    }
+                    className="field"
+                  />
                 </div>
-
-                {/* Error Message */}
-                {orderError && (
-                  <div className="bg-terracotta/10 border border-terracotta text-terracotta px-6 py-4 rounded-lg text-sm font-medium">
-                    {orderError}
-                  </div>
-                )}
-
-                {/* Buttons */}
-                <div className="flex gap-4">
-                  <Link
-                    href="/shop"
-                    className="flex-1 border-2 border-ink/20 py-4 px-6 rounded-lg text-center font-semibold text-ink hover:bg-cream hover:border-ink/40 transition-all"
-                  >
-                    Continue Shopping
-                  </Link>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="flex-1 bg-sage-dark text-white py-4 px-6 rounded-lg font-semibold hover:bg-ink hover:shadow-lg transition-all active:scale-95 disabled:opacity-60"
-                  >
-                    {submitting ? "Processing…" : "Place Order"}
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* Order Summary Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="bg-white p-8 rounded-2xl shadow-sm border border-white sticky top-24">
-                <h2 className="font-serif text-2xl text-ink mb-6">
-                  Order Items
-                </h2>
-
-                <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
-                  {state.items.map((item) => (
-                    <div
-                      key={item.product.id}
-                      className="flex gap-4 pb-4 border-b border-beige last:border-0"
-                    >
-                      <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-cream">
-                        <Image
-                          src={item.product.image}
-                          alt={item.product.name}
-                          width={80}
-                          height={80}
-                          className="object-cover w-full h-full"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-ink truncate">
-                          {item.product.name}
-                        </p>
-                        <p className="text-xs text-ink-soft mt-1">
-                          Qty: {item.quantity}
-                        </p>
-                        <p className="font-bold text-sage-dark mt-2">
-                          {formatPrice(item.product.price * item.quantity)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Totals */}
-                <div className="border-t-2 border-beige pt-6 space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-ink-soft">Subtotal</span>
-                    <span className="text-ink font-semibold">
-                      {formatPrice(totalPrice)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-ink-soft">Shipping</span>
-                    <span className="text-ink font-semibold">FREE</span>
-                  </div>
-                  <div className="flex justify-between text-lg pt-3 border-t border-beige">
-                    <span className="font-bold text-ink">Total</span>
-                    <span className="font-bold text-sage-dark text-xl">
-                      {formatPrice(totalPrice)}
-                    </span>
-                  </div>
+                <div>
+                  <label htmlFor="phone" className="field-label">
+                    Phone
+                  </label>
+                  <input
+                    id="phone"
+                    type="tel"
+                    required
+                    autoComplete="tel"
+                    value={form.phone}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, phone: e.target.value }))
+                    }
+                    className="field"
+                  />
                 </div>
               </div>
+
+              <div>
+                <label htmlFor="address" className="field-label">
+                  Delivery address
+                </label>
+                <textarea
+                  id="address"
+                  required
+                  rows={3}
+                  autoComplete="street-address"
+                  value={form.address}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, address: e.target.value }))
+                  }
+                  className="field resize-none"
+                />
+              </div>
             </div>
-          </div>
+
+            {orderError && (
+              <p
+                role="alert"
+                className="mt-6 border-l-2 border-terracotta bg-terracotta/10 px-4 py-3 text-[15px] text-ink"
+              >
+                {orderError}
+              </p>
+            )}
+
+            <div className="mt-8 flex flex-col items-center gap-5 sm:flex-row">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="btn-primary w-full sm:w-auto"
+              >
+                {/* On phones the summary sits below this button, so show the total. */}
+                {submitting
+                  ? "Placing your order…"
+                  : `Place order · ${formatPrice(totalPrice)}`}
+              </button>
+              <Link href="/shop" className="link-underline text-[15px]">
+                Keep shopping
+              </Link>
+            </div>
+          </form>
+
+          <aside className="lg:col-span-4 lg:col-start-9">
+            <div className="bg-cream-deep/60 p-6 lg:sticky lg:top-28">
+              <h2 className="mb-2 font-serif text-[26px] text-ink">
+                Your order
+              </h2>
+
+              <ul className="max-h-96 divide-y divide-beige overflow-y-auto">
+                {state.items.map((item) => (
+                  <li key={item.product.id} className="flex gap-4 py-4">
+                    <div className="relative h-20 w-16 shrink-0 overflow-hidden bg-cream-deep">
+                      <Image
+                        src={item.product.image || PLACEHOLDER_IMAGE}
+                        alt=""
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-serif text-[17px] leading-snug text-ink">
+                        {item.product.name}
+                      </p>
+                      <p className="mt-1 text-[13px] text-ink-soft">
+                        Quantity {item.quantity}
+                      </p>
+                    </div>
+                    <p className="shrink-0 text-[15px] tabular-nums text-ink">
+                      {formatPrice(item.product.price * item.quantity)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+
+              <dl className="space-y-2 border-t border-beige pt-4 text-[15px]">
+                <div className="flex justify-between">
+                  <dt className="text-ink-soft">Subtotal</dt>
+                  <dd className="tabular-nums">{formatPrice(totalPrice)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-ink-soft">Delivery</dt>
+                  <dd>Free</dd>
+                </div>
+                <div className="flex items-baseline justify-between border-t border-ink/80 pt-3">
+                  <dt className="font-medium text-ink">Total</dt>
+                  <dd className="font-serif text-[26px] tabular-nums text-ink">
+                    {formatPrice(totalPrice)}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </aside>
         </div>
       </div>
     </StoreLayout>

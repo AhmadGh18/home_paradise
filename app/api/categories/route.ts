@@ -1,6 +1,4 @@
-import { ok } from "@/lib/api";
+import { ok, route } from "@/lib/api";
 import { listCategories } from "@/lib/repo/categories";
 
-export async function GET() {
-  return ok(await listCategories());
-}
+export const GET = route(async () => ok(await listCategories()));
