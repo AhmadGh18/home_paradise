@@ -19,7 +19,7 @@ interface OrderRow {
   address: string;
   items: string;
   total: string;
-  status: OrderStatus;
+  status: OrderStatus | "shipped";
   createdAt: string;
 }
 
@@ -32,7 +32,8 @@ function toOrder(row: OrderRow): Order {
     address: row.address,
     items: JSON.parse(row.items) as OrderItem[],
     total: Number(row.total),
-    status: row.status,
+    // Shipped no longer exists as a status; older orders may still have it.
+    status: row.status === "shipped" ? "delivered" : row.status,
     createdAt: row.createdAt,
   };
 }
@@ -163,6 +164,9 @@ export function updateOrderStatusById(
     if (!rows[0]) return undefined;
     const order = toOrder(rows[0] as OrderRow);
 
+    // Repeating a change (a double click, say) does nothing and isn't an error.
+    if (order.status === status) return { order, stockChanged: false };
+
     const cancelling = order.status !== "cancelled" && status === "cancelled";
     const reinstating = order.status === "cancelled" && status !== "cancelled";
 
@@ -180,7 +184,10 @@ export function updateOrderStatusById(
         for (const item of order.items) {
           const available = products.get(item.productId)?.stock ?? 0;
           if (available < (quantities.get(item.productId) ?? 0)) {
-            throw outOfStock(item.productName);
+            throw new HttpError(
+              409,
+              `There isn't enough "${item.productName}" in stock to restore this order.`,
+            );
           }
         }
       }

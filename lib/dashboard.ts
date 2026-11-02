@@ -1,4 +1,5 @@
-import type { Order, OrderStatus, Product } from "./types";
+import { ORDER_STATUSES } from "./order-status";
+import type { Order, Product } from "./types";
 
 export const DASHBOARD_RANGES = [7, 30, 90] as const;
 export type DashboardRange = (typeof DASHBOARD_RANGES)[number];
@@ -16,14 +17,6 @@ export interface RevenueBucket {
 
 const LOW_STOCK_THRESHOLD = 5;
 const DAY_MS = 24 * 60 * 60 * 1000;
-const STATUS_ORDER: OrderStatus[] = [
-  "pending",
-  "processing",
-  "shipped",
-  "delivered",
-  "cancelled",
-];
-
 // Fixed locale and time zone, so the numbers don't depend on where this runs.
 const dayLabel = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -99,7 +92,7 @@ export function buildDashboard(
         ? Math.round((revenue / soldInPeriod.length) * 100) / 100
         : 0,
     buckets,
-    statusCounts: STATUS_ORDER.map((status) => ({
+    statusCounts: ORDER_STATUSES.map((status) => ({
       status,
       count: inPeriod.filter((o) => o.status === status).length,
     })),

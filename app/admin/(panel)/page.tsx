@@ -7,17 +7,10 @@ import {
 } from "@/lib/dashboard";
 import { listOrders } from "@/lib/repo/orders";
 import { listProducts } from "@/lib/repo/products";
+import { ORDER_STATUS_LABEL, ORDER_STATUS_STYLE } from "@/lib/order-status";
 import { formatPrice } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-
-const statusColor: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800",
-  processing: "bg-blue-100 text-blue-800",
-  shipped: "bg-purple-100 text-purple-800",
-  delivered: "bg-green-100 text-green-800",
-  cancelled: "bg-red-100 text-red-800",
-};
 
 const orderDate = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -165,7 +158,7 @@ export default async function AdminDashboard({ searchParams }: Props) {
               {data.statusCounts.map(({ status, count }) => (
                 <li key={status}>
                   <div className="mb-1.5 flex justify-between text-[13px]">
-                    <span className="capitalize text-ink-soft">{status}</span>
+                    <span className="text-ink-soft">{ORDER_STATUS_LABEL[status]}</span>
                     <span className="tabular-nums text-ink">{count}</span>
                   </div>
                   <div className="h-2 bg-cream-deep/70">
@@ -210,9 +203,9 @@ export default async function AdminDashboard({ searchParams }: Props) {
                       </td>
                       <td className="px-3 py-3">
                         <span
-                          className={`inline-block px-2 py-0.5 text-[12px] font-medium capitalize ${statusColor[order.status] ?? "bg-cream-deep text-ink"}`}
+                          className={`inline-block px-2 py-0.5 text-[12px] font-medium ${ORDER_STATUS_STYLE[order.status]}`}
                         >
-                          {order.status}
+                          {ORDER_STATUS_LABEL[order.status]}
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-3 py-3 text-[13px] text-ink-soft">

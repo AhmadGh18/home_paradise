@@ -1,4 +1,5 @@
 import { HttpError, imageBytesToDataUrl } from "./api";
+import { ORDER_STATUSES } from "./order-status";
 import type { OrderStatus, Product } from "./types";
 
 type Body = Record<string, unknown>;
@@ -254,14 +255,6 @@ export function parseNewOrder(body: Body): NewOrder {
     })),
   };
 }
-
-const ORDER_STATUSES: readonly OrderStatus[] = [
-  "pending",
-  "processing",
-  "shipped",
-  "delivered",
-  "cancelled",
-];
 
 export function parseOrderStatus(value: unknown): OrderStatus {
   if (!ORDER_STATUSES.includes(value as OrderStatus)) {
